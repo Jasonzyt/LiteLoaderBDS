@@ -18,8 +18,8 @@ class WitherRandomAttackPosGoal : public RandomStrollGoal {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_WITHERRANDOMATTACKPOSGOAL
 public:
-    class WitherRandomAttackPosGoal& operator=(class WitherRandomAttackPosGoal const&) = delete;
-    WitherRandomAttackPosGoal(class WitherRandomAttackPosGoal const&) = delete;
+    class WitherRandomAttackPosGoal& operator=(class WitherRandomAttackPosGoal const &) = delete;
+    WitherRandomAttackPosGoal(class WitherRandomAttackPosGoal const &) = delete;
     WitherRandomAttackPosGoal() = delete;
 #endif
 
@@ -32,6 +32,7 @@ public:
     /*5*/ virtual void stop();
     /*8*/ virtual void __unk_vfn_8();
     /*9*/ virtual void __unk_vfn_9();
+    MCAPI WitherRandomAttackPosGoal(class Mob &, float, int, int);
 
 protected:
 

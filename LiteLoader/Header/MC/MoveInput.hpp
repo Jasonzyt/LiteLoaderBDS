@@ -17,14 +17,14 @@ class MoveInput {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_MOVEINPUT
 public:
-    class MoveInput& operator=(class MoveInput const&) = delete;
-    MoveInput(class MoveInput const&) = delete;
+    class MoveInput& operator=(class MoveInput const &) = delete;
+    MoveInput(class MoveInput const &) = delete;
     MoveInput() = delete;
 #endif
 
 public:
     /*0*/ virtual ~MoveInput();
-    /*1*/ virtual void tick(struct IPlayerMovementProxy&);
+    /*1*/ virtual void tick(struct IPlayerMovementProxy &);
     /*2*/ virtual void __unk_vfn_2();
     /*3*/ virtual void __unk_vfn_3();
     /*4*/ virtual void clearInputState();
@@ -32,16 +32,12 @@ public:
     /*6*/ virtual bool allowPicking(float, float);
     /*7*/ virtual void setJumping(bool);
     /*8*/ virtual void setAutoJumpingInWater(bool);
-    /*9*/ virtual void __unk_vfn_9();
+    /*9*/ virtual bool isChangeHeight() const;
     /*10*/ virtual void setSneakDown(bool);
     /*11*/ virtual bool isPlayerMoving() const;
-    /*12*/ virtual class Vec3 const& getGazeDirection() const;
+    /*12*/ virtual class Vec3 const & getGazeDirection() const;
+    /*13*/ virtual struct MoveInputComponent extractInputComponent() const;
     /*
-    inline bool isChangeHeight() const{
-        bool (MoveInput::*rv)() const;
-        *((void**)&rv) = dlsym("?isChangeHeight@MoveInput@@UEBA_NXZ");
-        return (this->*rv)();
-    }
     inline void clearMovementState(){
         void (MoveInput::*rv)();
         *((void**)&rv) = dlsym("?clearMovementState@MoveInput@@UEAAXXZ");

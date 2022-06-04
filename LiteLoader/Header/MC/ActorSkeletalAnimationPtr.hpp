@@ -2,6 +2,7 @@
 #pragma once
 #define AUTO_GENERATED
 #include "../Global.h"
+#include "Bedrock.hpp"
 
 #define BEFORE_EXTRA
 // Include Headers or Declare Types Here
@@ -17,16 +18,17 @@ class ActorSkeletalAnimationPtr {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ACTORSKELETALANIMATIONPTR
 public:
-    ActorSkeletalAnimationPtr(class ActorSkeletalAnimationPtr const&) = delete;
+    ActorSkeletalAnimationPtr(class ActorSkeletalAnimationPtr const &) = delete;
     ActorSkeletalAnimationPtr() = delete;
 #endif
 
 public:
-    MCAPI class HashedString const& getName() const;
+    MCAPI ActorSkeletalAnimationPtr(class gsl::not_null<class Bedrock::NonOwnerPointer<class ActorAnimationGroup>> const &, class HashedString const &);
+    MCAPI class HashedString const & getName() const;
     MCAPI bool isNull() const;
-    MCAPI class ActorSkeletalAnimation const* operator->() const;
-    MCAPI class ActorSkeletalAnimation* operator->();
-    MCAPI class ActorSkeletalAnimationPtr& operator=(class ActorSkeletalAnimationPtr const&);
+    MCAPI class ActorSkeletalAnimation const * operator->() const;
+    MCAPI class ActorSkeletalAnimation * operator->();
+    MCAPI class ActorSkeletalAnimationPtr & operator=(class ActorSkeletalAnimationPtr const &);
     MCAPI ~ActorSkeletalAnimationPtr();
     MCAPI static class ActorSkeletalAnimationPtr const NONE;
 

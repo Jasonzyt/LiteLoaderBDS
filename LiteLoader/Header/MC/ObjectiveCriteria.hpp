@@ -17,15 +17,17 @@ class ObjectiveCriteria {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_OBJECTIVECRITERIA
 public:
-    class ObjectiveCriteria& operator=(class ObjectiveCriteria const&) = delete;
-    ObjectiveCriteria(class ObjectiveCriteria const&) = delete;
+    class ObjectiveCriteria& operator=(class ObjectiveCriteria const &) = delete;
+    ObjectiveCriteria(class ObjectiveCriteria const &) = delete;
     ObjectiveCriteria() = delete;
 #endif
 
 public:
-    MCAPI std::string const& getName() const;
+    MCAPI ObjectiveCriteria(std::string const &, bool, enum ObjectiveRenderType);
+    MCAPI std::string const & getName() const;
     MCAPI bool isReadOnly() const;
-    MCAPI static std::unique_ptr<class ObjectiveCriteria> deserialize(class CompoundTag const&);
+    MCAPI static std::unique_ptr<class ObjectiveCriteria> deserialize(class CompoundTag const &);
+    MCAPI static std::unique_ptr<class CompoundTag> serialize(class ObjectiveCriteria const &);
 
 protected:
 

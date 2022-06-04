@@ -18,15 +18,18 @@ class EnchantmentInstance {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ENCHANTMENTINSTANCE
 public:
-    class EnchantmentInstance& operator=(class EnchantmentInstance const&) = delete;
-    EnchantmentInstance(class EnchantmentInstance const&) = delete;
-    EnchantmentInstance() = delete;
+    class EnchantmentInstance& operator=(class EnchantmentInstance const &) = delete;
+    EnchantmentInstance(class EnchantmentInstance const &) = delete;
 #endif
 
 public:
     MCAPI EnchantmentInstance(enum Enchant::Type, int);
+    MCAPI EnchantmentInstance();
     MCAPI int getEnchantLevel() const;
     MCAPI enum Enchant::Type getEnchantType() const;
+    MCAPI bool operator==(class EnchantmentInstance const &) const;
+    MCAPI void setEnchantLevel(int);
+    MCAPI void setEnchantType(enum Enchant::Type);
 
 protected:
 

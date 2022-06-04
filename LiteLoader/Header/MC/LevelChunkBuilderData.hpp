@@ -15,12 +15,13 @@ class LevelChunkBuilderData {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_LEVELCHUNKBUILDERDATA
 public:
-    class LevelChunkBuilderData& operator=(class LevelChunkBuilderData const&) = delete;
-    LevelChunkBuilderData(class LevelChunkBuilderData const&) = delete;
+    class LevelChunkBuilderData& operator=(class LevelChunkBuilderData const &) = delete;
+    LevelChunkBuilderData(class LevelChunkBuilderData const &) = delete;
 #endif
 
 public:
     MCAPI LevelChunkBuilderData();
+    MCAPI ~LevelChunkBuilderData();
 
 protected:
 

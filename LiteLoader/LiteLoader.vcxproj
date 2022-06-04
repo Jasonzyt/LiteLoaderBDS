@@ -32,9 +32,10 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)LiteLoader;$(SolutionDir)LiteLoader\Header;$(SolutionDir)LiteLoader\Header\third-party;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)LiteLoader;$(SolutionDir)LiteLoader\Header;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <ExternalIncludePath>$(SolutionDir)LiteLoader\Header\third-party;$(VC_IncludePath);$(WindowsSDK_IncludePath);</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Label="LLVM" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <UseLldLink>true</UseLldLink>
@@ -42,7 +43,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -55,6 +55,9 @@
       <ExceptionHandling>Async</ExceptionHandling>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <WarningLevel>Level3</WarningLevel>
+      <ExternalWarningLevel>Level1</ExternalWarningLevel>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -63,7 +66,7 @@
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <DelayLoadDLLs>bedrock_server.dll</DelayLoadDLLs>
-      <AdditionalDependencies>$(SolutionDir)LiteLoader\Lib\third-party\leveldb\leveldb.lib;$(SolutionDir)LiteLoader\Lib\third-party\openssl\libcrypto.lib;$(SolutionDir)LiteLoader\Lib\third-party\openssl\libssl.lib;$(TargetDir)Chakra.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)LiteLoader\Lib\third-party\leveldb\leveldb.lib;$(SolutionDir)LiteLoader\Lib\third-party\openssl\libcrypto.lib;$(SolutionDir)LiteLoader\Lib\third-party\openssl\libssl.lib;$(TargetDir)LLPreLoader.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if exist "$(TargetDir)LiteLoader.lib" (
@@ -84,15 +87,44 @@ LibraryBuilder.exe
 
 :end</Command>
     </PreBuildEvent>
+    <ResourceCompile />
+    <ResourceCompile />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Kernel\Command\DynamicCommandAPI.cpp" />
+    <ClCompile Include="Kernel\DB\Any.cpp" />
+    <ClCompile Include="Kernel\DB\ConnParams.cpp" />
+    <ClCompile Include="Kernel\DB\Impl\MySQL\Session.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)MySQL\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Impl\MySQL\Stmt.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)MySQL\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Impl\SQLite\Session.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)SQLite\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Impl\SQLite\Stmt.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)SQLite\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Row.cpp" />
+    <ClCompile Include="Kernel\DB\RowSet.cpp" />
+    <ClCompile Include="Kernel\DB\Session.cpp" />
+    <ClCompile Include="Kernel\DB\Stmt.cpp" />
+    <ClCompile Include="Kernel\I18nAPI_LL.cpp" />
+    <ClCompile Include="Kernel\NBT\PrettySnbtFormatAPI.cpp" />
     <ClCompile Include="Kernel\Compatibility.cpp" />
+    <ClCompile Include="Kernel\MC\ColorFormatAPI.cpp" />
     <ClCompile Include="Kernel\MC\I18nAPI.cpp" />
     <ClCompile Include="Kernel\AllowListAPI.cpp" />
+    <ClCompile Include="Kernel\Network\PacketAPI.cpp" />
+    <ClCompile Include="Kernel\RemoteCallAPI.cpp" />
     <ClCompile Include="Kernel\Scoreboard\ObjectiveAPI.cpp" />
     <ClCompile Include="Kernel\Utils\DbgHelper.cpp" />
     <ClCompile Include="Kernel\SimulatedPlayerAPI.cpp" />
+    <ClCompile Include="Kernel\Utils\ShellLinkFile.cpp" />
+    <ClCompile Include="Kernel\Utils\SRWLock.cpp" />
     <ClCompile Include="Kernel\Utils\STLHelper.cpp" />
+    <ClCompile Include="Kernel\Utils\StringReader.cpp" />
     <ClCompile Include="Main\AddonsHelper.cpp" />
     <ClCompile Include="Main\AutoUpgrade.cpp" />
     <ClCompile Include="Main\BuiltinUnlockCmd.cpp" />
@@ -101,6 +133,18 @@ LibraryBuilder.exe
     <ClCompile Include="Main\dllmain.cpp" />
     <ClCompile Include="Main\BuiltinBugFix.cpp" />
     <ClInclude Include="Header\AllowListAPI.h" />
+    <ClInclude Include="Header\DB\Any.h" />
+    <ClInclude Include="Header\DB\ConnParams.h" />
+    <ClInclude Include="Header\DB\Impl\MySQL\Session.h" />
+    <ClInclude Include="Header\DB\Impl\MySQL\Stmt.h" />
+    <ClInclude Include="Header\DB\Impl\SQLite\Session.h" />
+    <ClInclude Include="Header\DB\Impl\SQLite\Stmt.h" />
+    <ClInclude Include="Header\DB\Pointer.h" />
+    <ClInclude Include="Header\DB\RowSet.h" />
+    <ClInclude Include="Header\DB\Row.h" />
+    <ClInclude Include="Header\DB\Session.h" />
+    <ClInclude Include="Header\DB\Stmt.h" />
+    <ClInclude Include="Header\DB\Types.h" />
     <ClInclude Include="Header\Impl\FormPacketHelper.h" />
     <ClInclude Include="Header\Impl\ObjectivePacketHelper.h" />
     <ClInclude Include="Header\LoggerAPI.h" />
@@ -111,11 +155,14 @@ LibraryBuilder.exe
     <ClInclude Include="Header\MC\BlockInstance.hpp" />
     <ClInclude Include="Header\MC\ByteArrayTag.hpp" />
     <ClInclude Include="Header\MC\ByteTag.hpp" />
+    <ClInclude Include="Header\MC\ColorFormat.hpp" />
+    <ClInclude Include="Header\MC\CommandFlag.hpp" />
     <ClInclude Include="Header\MC\CommandMessage.hpp" />
     <ClInclude Include="Header\MC\CommandPosition.hpp" />
     <ClInclude Include="Header\MC\CommandOrigin.hpp" />
     <ClInclude Include="Header\MC\CommandOutput.hpp" />
     <ClInclude Include="Header\MC\CommandParameterData.hpp" />
+    <ClInclude Include="Header\MC\CommandPositionFloat.hpp" />
     <ClInclude Include="Header\MC\CommandRegistry.hpp" />
     <ClInclude Include="Header\MC\CommandSelector.hpp" />
     <ClInclude Include="Header\MC\CommandSelectorBase.hpp" />
@@ -125,6 +172,7 @@ LibraryBuilder.exe
     <ClInclude Include="Header\MC\DataItem2.hpp" />
     <ClInclude Include="Header\MC\DBStorage.hpp" />
     <ClInclude Include="Header\MC\DoubleTag.hpp" />
+    <ClInclude Include="Header\DynamicCommandAPI.h" />
     <ClInclude Include="Header\MC\EndTag.hpp" />
     <ClInclude Include="Header\MC\FloatTag.hpp" />
     <ClInclude Include="Header\FormUI.h" />
@@ -140,6 +188,7 @@ LibraryBuilder.exe
     <ClInclude Include="Header\MC\MobEffectInstance.hpp" />
     <ClInclude Include="Header\MC\NbtIo.hpp" />
     <ClInclude Include="Header\MC\Packet.hpp" />
+    <ClInclude Include="Header\MC\PrettySnbtFormat.hpp" />
     <ClInclude Include="Header\MC\ReadOnlyBinaryStream.hpp" />
     <ClInclude Include="Header\MC\RelativeFloat.hpp" />
     <ClInclude Include="Header\MC\ScoreboardId.hpp" />
@@ -175,7 +224,7 @@ LibraryBuilder.exe
     <ClInclude Include="Header\MC\Spawner.hpp" />
     <ClCompile Include="Kernel\MC\ActorAPI.cpp" />
     <ClCompile Include="Kernel\MC\ActorDamageSource.cpp" />
-    <ClCompile Include="Kernel\Network\BinaryStream.cpp" />
+    <ClCompile Include="Kernel\Network\BinaryStreamAPI.cpp" />
     <ClCompile Include="Kernel\MC\BlockActorAPI.cpp" />
     <ClCompile Include="Kernel\MC\BlockAPI.cpp" />
     <ClCompile Include="Kernel\MC\BlockInstanceAPI.cpp" />
@@ -221,7 +270,6 @@ LibraryBuilder.exe
     <ClCompile Include="Kernel\MC\Types.cpp" />
     <ClCompile Include="Kernel\Utils\CryptHelper.cpp" />
     <ClCompile Include="Kernel\Utils\FileHelper.cpp" />
-    <ClCompile Include="Kernel\TranslationAPI.cpp" />
     <ClCompile Include="Kernel\Utils\GlobalService.cpp" />
     <ClCompile Include="Kernel\Utils\NetworkHelper.cpp" />
     <ClCompile Include="Kernel\Utils\PlayerMap.cpp" />
@@ -249,8 +297,13 @@ LibraryBuilder.exe
     <ResourceCompile Include="Resource\LiteLoader.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Header\RemoteCallAPI.h" />
+    <ClInclude Include="Header\TranslationAPI.h" />
     <ClInclude Include="Header\Utils\DbgHelper.h" />
+    <ClInclude Include="Header\Utils\ShellLinkFile.h" />
+    <ClInclude Include="Header\Utils\SRWLock.h" />
     <ClInclude Include="Header\Utils\STLHelper.h" />
+    <ClInclude Include="Header\Utils\StringReader.h" />
     <ClInclude Include="Main\AddonsHelper.h" />
     <ClInclude Include="Main\AutoUpgrade.h" />
     <ClInclude Include="Main\Config.h" />
@@ -269,7 +322,7 @@ LibraryBuilder.exe
     <ClInclude Include="Header\Utils\FileHelper.h" />
     <ClInclude Include="Header\Utils\Hash.h" />
     <ClInclude Include="Header\HookAPI.h" />
-    <ClInclude Include="Header\TranslationAPI.h" />
+    <ClInclude Include="Header\I18nAPI.h" />
     <ClInclude Include="Header\Utils\Json.h" />
     <ClInclude Include="Header\GlobalServiceAPI.h" />
     <ClInclude Include="Header\Utils\NetworkHelper.h" />
@@ -290,11 +343,16 @@ LibraryBuilder.exe
     <ClInclude Include="Main\Version.h" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="Header\third-party\cpp-base64\lib\cpp-base64.lib" />
     <Library Include="Lib\bedrock_server_api.lib" />
     <Library Include="Lib\bedrock_server_var.lib" />
     <Library Include="Lib\SymDBHelper.lib" />
+    <Library Include="Lib\third-party\compact_enc_det\ced.lib" />
+    <Library Include="Lib\third-party\cpp-base64\cpp-base64.lib" />
     <Library Include="Lib\third-party\dbghelp\dbghelp.lib" />
+    <Library Include="Lib\third-party\dyncall\dyncallback_s.lib" />
+    <Library Include="Lib\third-party\dyncall\dyncall_s.lib" />
+    <Library Include="Lib\third-party\dyncall\dynload_s.lib" />
+    <Library Include="Lib\third-party\mysql\mysqlclient.lib" />
     <Library Include="Lib\third-party\openssl\libcrypto.lib" />
     <Library Include="Lib\third-party\openssl\libssl.lib" />
     <Library Include="Lib\third-party\SQLiteCpp\sqlite3.lib" />

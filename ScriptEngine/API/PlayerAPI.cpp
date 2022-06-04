@@ -20,6 +20,9 @@
 #include <MC/ScoreboardId.hpp>
 #include <MC/ListTag.hpp>
 #include <MC/CompoundTag.hpp>
+#include <MC/SimulatedPlayer.hpp>
+#include <PlayerInfoAPI.h>
+#include <SafeGuardRecord.h>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -30,7 +33,7 @@ using namespace std;
 //////////////////// Class Definition ////////////////////
 
 ClassDefine<PlayerClass> PlayerClassBuilder =
-    defineClass<PlayerClass>("LXL_Player")
+    defineClass<PlayerClass>("LLSE_Player")
         .constructor(nullptr)
         .instanceFunction("getRawPtr", &PlayerClass::getRawPtr)
 
@@ -82,6 +85,7 @@ ClassDefine<PlayerClass> PlayerClassBuilder =
         .instanceFunction("getArmor", &PlayerClass::getArmor)
         .instanceFunction("getEnderChest", &PlayerClass::getEnderChest)
         .instanceFunction("getRespawnPosition",&PlayerClass::getRespawnPosition)
+        .instanceFunction("setRespawnPosition",&PlayerClass::setRespawnPosition)
         .instanceFunction("refreshItems", &PlayerClass::refreshItems)
 
         .instanceFunction("getScore", &PlayerClass::getScore)
@@ -117,7 +121,24 @@ ClassDefine<PlayerClass> PlayerClassBuilder =
         .instanceFunction("getAllTags", &PlayerClass::getAllTags)
         .instanceFunction("getAbilities", &PlayerClass::getAbilities)
         .instanceFunction("getAttributes", &PlayerClass::getAttributes)
-
+        
+        //SimulatedPlayer API
+        .instanceFunction("isSimulatedPlayer", &PlayerClass::isSimulatedPlayer)
+        .instanceFunction("simulateAttack", &PlayerClass::simulateAttack)
+        .instanceFunction("simulateDestory", &PlayerClass::simulateDestory)
+        .instanceFunction("simulateDisconnect", &PlayerClass::simulateDisconnect)
+        .instanceFunction("simulateInteract", &PlayerClass::simulateInteract)
+        .instanceFunction("simulateJump", &PlayerClass::simulateJump)
+        .instanceFunction("simulateLocalMove", &PlayerClass::simulateLocalMove)
+        .instanceFunction("simulateLookAt", &PlayerClass::simulateLookAt)
+        .instanceFunction("simulateSetBodyRotation", &PlayerClass::simulateSetBodyRotation)
+        .instanceFunction("simulateNavigateTo", &PlayerClass::simulateNavigateTo)
+        .instanceFunction("simulateUseItem", &PlayerClass::simulateUseItem)
+        .instanceFunction("simulateStopDestroyingBlock", &PlayerClass::simulateStopDestroyingBlock)
+        .instanceFunction("simulateStopInteracting", &PlayerClass::simulateStopInteracting)
+        .instanceFunction("simulateStopMoving", &PlayerClass::simulateStopMoving)
+        .instanceFunction("simulateStopUsingItem", &PlayerClass::simulateStopUsingItem)
+        
         //For Compatibility
         .instanceProperty("ip", &PlayerClass::getIP)
         .instanceFunction("setTag", &PlayerClass::setNbt)
@@ -227,7 +248,7 @@ void PlayerClass::set(Player* player)
 {
     __try
     {
-        id = ((Actor*)player)->getUniqueID();
+        id = player->getUniqueID();
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -286,7 +307,17 @@ Local<Value> PlayerClass::getXuid()
         if (!player)
             return Local<Value>();
 
-        return String::newString(player->getXuid());
+        string xuid;
+        try
+        {
+            xuid = player->getXuid();
+        }
+        catch (...)
+        {
+            logger.debug("Fail in getXuid!");
+            xuid = PlayerInfo::getXuid(player->getRealName());
+        }
+        return String::newString(xuid);
     }
     CATCH("Fail in getXuid!")
 }
@@ -298,7 +329,17 @@ Local<Value> PlayerClass::getUuid()
         if (!player)
             return Local<Value>();
 
-        return String::newString(player->getUuid());
+        string uuid;
+        try
+        {
+            uuid = player->getUuid();
+        }
+        catch (...)
+        {
+            logger.debug("Fail in getUuid!");
+            uuid = PlayerInfo::getUUID(player->getRealName());
+        }
+        return String::newString(uuid);
     }
     CATCH("Fail in getUuid!")
 }
@@ -548,7 +589,7 @@ Local<Value> PlayerClass::isOP(const Arguments& args)
         if (!player)
             return Local<Value>();
 
-        return Boolean::newBoolean(player->isOP());
+        return Boolean::newBoolean(player->isOperator());
     }
     CATCH("Fail in IsOP!")
 }
@@ -567,6 +608,8 @@ Local<Value> PlayerClass::setPermLevel(const Arguments& args)
         int newPerm = args[0].asNumber().toInt32();
         if (newPerm >= 0 || newPerm <= 4)
         {
+            RecordOperation(ENGINE_OWN_DATA()->pluginName, "Set Permission Level",
+                fmt::format("Set Player {} Permission Level as {}.", player->getRealName(), newPerm));
             player->setPermissions((CommandPermissionLevel)newPerm);
             res = true;
         }
@@ -666,10 +709,29 @@ Local<Value> PlayerClass::talkAs(const Arguments& args)
         if (!player)
             return Local<Value>();
 
-        player->sendTextTalkPacket(args[0].toStr());
+        player->sendTextTalkPacket(args[0].toStr(), nullptr);
         return Boolean::newBoolean(true);
     }
     CATCH("Fail in talkAs!");
+}
+
+Local<Value> PlayerClass::talkTo(const Arguments& args)
+{
+    CHECK_ARGS_COUNT(args, 2);
+    CHECK_ARG_TYPE(args[0], ValueKind::kString);
+
+    try {
+        Player* target = PlayerClass::extract(args[1]);
+        if (!target)
+            return Local<Value>();
+        Player* player = get();
+        if (!player)
+            return Local<Value>();
+
+        player->sendTextTalkPacket(args[0].toStr(), target);
+        return Boolean::newBoolean(true);
+    }
+    CATCH("Fail in talkTo!");
 }
 
 Local<Value> PlayerClass::getHand(const Arguments& args)
@@ -742,6 +804,64 @@ Local<Value> PlayerClass::getRespawnPosition(const Arguments& args)
         return IntPos::newPos(position.first,position.second);
     }
     CATCH("Fail in getRespawnPosition!")
+}
+
+Local<Value> PlayerClass::setRespawnPosition(const Arguments& args)
+{
+    try {
+        Player* player = get();
+        if (!player)
+            return Local<Value>();
+        IntVec4 pos;
+        if (args.size() == 1)
+        {
+            // IntPos
+            if (IsInstanceOf<IntPos>(args[0]))
+            {
+                // IntPos
+                IntPos* posObj = IntPos::extractPos(args[0]);
+                if (posObj->dim < 0)
+                    return Boolean::newBoolean(false);
+                else
+                {
+                    pos = *posObj;
+                }
+            }
+            else if (IsInstanceOf<FloatPos>(args[0]))
+            {
+                // FloatPos
+                FloatPos* posObj = FloatPos::extractPos(args[0]);
+                if (posObj->dim < 0)
+                    return Boolean::newBoolean(false);
+                else
+                {
+                    pos = posObj->toIntVec4();
+                }
+            }
+            else
+            {
+                logger.error("Wrong type of argument in setRespawnPosition!");
+                return Local<Value>();
+            }
+        }
+        else if (args.size() == 4)
+        {
+            // Number Pos
+            CHECK_ARG_TYPE(args[0], ValueKind::kNumber);
+            CHECK_ARG_TYPE(args[1], ValueKind::kNumber);
+            CHECK_ARG_TYPE(args[2], ValueKind::kNumber);
+            CHECK_ARG_TYPE(args[3], ValueKind::kNumber);
+            pos = {args[0].toInt(), args[1].toInt(), args[2].toInt(), args[3].toInt()};
+        }
+        else
+        {
+            logger.error("Wrong number of arguments in setRespawnPosition!");
+            return Local<Value>();
+        }
+        player->setRespawnPosition(pos.getBlockPos(), pos.dim);
+        return Boolean::newBoolean(true);
+    }
+    CATCH("Fail in setRespawnPosition!")
 }
 
 Local<Value> PlayerClass::refreshItems(const Arguments& args)
@@ -863,6 +983,8 @@ Local<Value> PlayerClass::crash(const Arguments& args)
         if (!player)
             return Local<Value>();
 
+        RecordOperation(ENGINE_OWN_DATA()->pluginName, "Crash Player",
+            "Execute player.crash() to crash player <" + player->getRealName() + ">");
         return Boolean::newBoolean(player->crashClient());
     }
     CATCH("Fail in crashPlayer!");
@@ -1018,7 +1140,8 @@ Local<Value> PlayerClass::setBossBar(const Arguments& args)
     CHECK_ARGS_COUNT(args, 2);
     CHECK_ARG_TYPE(args[0], ValueKind::kString);
     CHECK_ARG_TYPE(args[1], ValueKind::kNumber);
-    
+    if (args.size() >= 3)
+        CHECK_ARG_TYPE(args[2], ValueKind::kNumber);
     try{
         Player* player = get();
         if (!player)
@@ -1030,8 +1153,10 @@ Local<Value> PlayerClass::setBossBar(const Arguments& args)
         else if(percent > 100)
             percent = 100;
         float value = (float)percent / 100;
-
-        player->sendBossEventPacket(BossEvent::Show, args[0].toStr(), value, BossEventColour::Red);     //Set
+        BossEventColour colour = BossEventColour::Red;
+        if (args.size() >= 3)
+            colour = (BossEventColour)args[2].toInt();
+        player->sendBossEventPacket(BossEvent::Show, args[0].toStr(), value, colour); // Set
         return Boolean::newBoolean(true);
     }
     CATCH("Fail in setBossBar!")
@@ -1088,6 +1213,11 @@ Local<Value> PlayerClass::sendSimpleForm(const Arguments& args)
             callback{ script::Global(args[4].asFunction()) }]
         (int chosen)
         {
+            if (LL::isServerStopping())
+                return;
+            if (!EngineManager::isValid(engine))
+                return;
+
             Player* pl = Level::getPlayer(id);
             if (!pl)
                 return;
@@ -1130,6 +1260,11 @@ Local<Value> PlayerClass::sendModalForm(const Arguments& args)
             callback{ script::Global(args[4].asFunction()) }]
         (bool chosen)
         {
+            if (LL::isServerStopping())
+                return;
+            if (!EngineManager::isValid(engine))
+                return;
+
             Player* pl = Level::getPlayer(id);
             if (!pl)
                 return;
@@ -1171,6 +1306,11 @@ Local<Value> PlayerClass::sendCustomForm(const Arguments& args)
             callback{ script::Global(args[1].asFunction()) }]
             (string result)
         {
+            if (LL::isServerStopping())
+                return;
+            if (!EngineManager::isValid(engine))
+                return;
+
             Player* pl = Level::getPlayer(id);
             if (!pl)
                 return;
@@ -1193,7 +1333,7 @@ Local<Value> PlayerClass::sendCustomForm(const Arguments& args)
     catch (const fifo_json::exception& e)
     {
         logger.error("Fail to parse Json string in sendCustomForm!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
 
         return Local<Value>();
     }
@@ -1289,11 +1429,12 @@ Local<Value> PlayerClass::getExtraData(const Arguments& args)
         if (key.empty())
             return Local<Value>();
 
-        return ENGINE_OWN_DATA()->playerDataDB.at(player->getRealName() + "-" + key).get();
-    }
-    catch (const std::out_of_range& e)
-    {
-        return Local<Value>();
+        auto& db = ENGINE_OWN_DATA()->playerDataDB;
+        auto res = db.find(player->getRealName() + "-" + key);
+        if (res == db.end() || res->second.isEmpty())
+            return Local<Value>();
+        else
+            return res->second.get();
     }
     CATCH("Fail in getExtraData!");
 }
@@ -1566,6 +1707,15 @@ Local<Value> PlayerClass::getAttributes(const Arguments& args)
         }
     }
     CATCH("Fail in getAttributes!");
+}
+
+Local<Value> PlayerClass::isSimulatedPlayer(const Arguments& args)
+{
+    try
+    {
+        return Boolean::newBoolean(get()->isSimulatedPlayer());
+    }
+    CATCH("Fail in isSimulatedPlayer!");
 }
 
 

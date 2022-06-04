@@ -17,12 +17,14 @@ class LevelChunkGarbageCollector {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_LEVELCHUNKGARBAGECOLLECTOR
 public:
-    class LevelChunkGarbageCollector& operator=(class LevelChunkGarbageCollector const&) = delete;
-    LevelChunkGarbageCollector(class LevelChunkGarbageCollector const&) = delete;
+    class LevelChunkGarbageCollector& operator=(class LevelChunkGarbageCollector const &) = delete;
+    LevelChunkGarbageCollector(class LevelChunkGarbageCollector const &) = delete;
     LevelChunkGarbageCollector() = delete;
 #endif
 
 public:
+    MCAPI LevelChunkGarbageCollector(class Dimension &);
+    MCAPI void acquireDiscardedChunk(std::unique_ptr<class LevelChunk>);
     MCAPI unsigned __int64 getPendingDeletesCount() const;
     MCAPI ~LevelChunkGarbageCollector();
 

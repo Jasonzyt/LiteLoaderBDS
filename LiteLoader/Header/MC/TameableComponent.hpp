@@ -17,18 +17,19 @@ class TameableComponent {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_TAMEABLECOMPONENT
 public:
-    class TameableComponent& operator=(class TameableComponent const&) = delete;
-    TameableComponent(class TameableComponent const&) = delete;
+    class TameableComponent& operator=(class TameableComponent const &) = delete;
+    TameableComponent(class TameableComponent const &) = delete;
 #endif
 
 public:
     MCAPI TameableComponent();
-    MCAPI bool getInteraction(class Actor&, class Player&, class ActorInteraction&);
-    MCAPI void tame(class Actor&, class Player&);
+    MCAPI bool getInteraction(class Actor &, class Player &, class ActorInteraction &);
+    MCAPI void tame(class Actor &, class Player &);
 
 protected:
 
 private:
-    MCAPI void _becomeTame(class Actor&);
+    MCAPI bool _attemptToTame(class Actor &, class Player &);
+    MCAPI bool _canTame(class Actor &, class Player &);
 
 };

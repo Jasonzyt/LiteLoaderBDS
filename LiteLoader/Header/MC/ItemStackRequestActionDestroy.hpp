@@ -18,9 +18,8 @@ class ItemStackRequestActionDestroy : public ItemStackRequestActionTransferBase 
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ITEMSTACKREQUESTACTIONDESTROY
 public:
-    class ItemStackRequestActionDestroy& operator=(class ItemStackRequestActionDestroy const&) = delete;
-    ItemStackRequestActionDestroy(class ItemStackRequestActionDestroy const&) = delete;
-    ItemStackRequestActionDestroy() = delete;
+    class ItemStackRequestActionDestroy& operator=(class ItemStackRequestActionDestroy const &) = delete;
+    ItemStackRequestActionDestroy(class ItemStackRequestActionDestroy const &) = delete;
 #endif
 
 public:
@@ -28,6 +27,7 @@ public:
     /*1*/ virtual void __unk_vfn_1();
     /*2*/ virtual void __unk_vfn_2();
     /*3*/ virtual void __unk_vfn_3();
+    MCAPI ItemStackRequestActionDestroy();
 
 protected:
 

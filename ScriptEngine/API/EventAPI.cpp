@@ -13,6 +13,7 @@
 #include <Engine/EngineOwnData.h>
 #include <Engine/GlobalShareData.h>
 #include <Engine/LocalShareData.h>
+#include <BuiltinCommands.h>
 #include "APIHelp.h"
 #include "BaseAPI.h"
 #include "BlockAPI.h"
@@ -64,7 +65,7 @@ enum class EVENT_TYPES : int
     onMoneyAdd, onMoneyReduce, onMoneyTrans, onMoneySet,
     beforeMoneyAdd, beforeMoneyReduce, beforeMoneyTrans, beforeMoneySet,
     /* Outdated Events */
-    onAttack, onExplode, onBedExplode,
+    onAttack,onExplode,onBedExplode,onMobSpawn,
     /* Internal */
     onFormSelected, EVENT_COUNT
 };
@@ -147,8 +148,8 @@ static const std::unordered_map<string, EVENT_TYPES> EventsMap{
     {"onConsumeTotem",EVENT_TYPES::onConsumeTotem},
     {"onEffectAdded",EVENT_TYPES::onEffectAdded},
     {"onEffectRemoved",EVENT_TYPES::onEffectRemoved},
-    {"onEffectUpdated",EVENT_TYPES::onEffectUpdated}
-};
+    {"onEffectUpdated",EVENT_TYPES::onEffectUpdated},
+    {"onMobSpawn", EVENT_TYPES::onMobSpawn}};
 struct ListenerListType
 {
     ScriptEngine *engine;
@@ -180,7 +181,7 @@ string EventTypeToString(EVENT_TYPES e)
     { \
         logger.error("Event Callback Failed!"); \
         logger.error("C++ Uncaught Exception Detected!"); \
-        logger.error(e.what()); \
+        logger.error(TextEncoding::toUTF8(e.what())); \
         logger.error("In Event: " + EventTypeToString(TYPE)); \
         logger.error("In Plugin: " + ENGINE_OWN_DATA()->pluginName); \
     } \
@@ -188,7 +189,7 @@ string EventTypeToString(EVENT_TYPES e)
     { \
         logger.error("Event Callback Failed!"); \
         logger.error("SEH Uncaught Exception Detected!"); \
-        logger.error(e.what()); \
+        logger.error(TextEncoding::toUTF8(e.what())); \
         logger.error("In Event: " + EventTypeToString(TYPE)); \
         logger.error("In Plugin: " + ENGINE_OWN_DATA()->pluginName); \
     } \
@@ -283,7 +284,7 @@ Local<Value> McClass::listen(const Arguments& args)
     CHECK_ARG_TYPE(args[1], ValueKind::kFunction);
 
     try{
-        return Boolean::newBoolean(LxlAddEventListener(EngineScope::currentEngine(),args[0].toStr(),args[1].asFunction()));
+        return Boolean::newBoolean(LLSEAddEventListener(EngineScope::currentEngine(),args[0].toStr(),args[1].asFunction()));
     }
     CATCH("Fail to Bind Listener!");
 }
@@ -291,7 +292,7 @@ Local<Value> McClass::listen(const Arguments& args)
 
 //////////////////// Funcs ////////////////////
 
-bool LxlAddEventListener(ScriptEngine *engine, const string &eventName, const Local<Function> &func)
+bool LLSEAddEventListener(ScriptEngine *engine, const string &eventName, const Local<Function> &func)
 {
     try {
         int eventId = int(EventsMap.at(eventName));
@@ -310,7 +311,7 @@ bool LxlAddEventListener(ScriptEngine *engine, const string &eventName, const Lo
     }
 }
 
-bool LxlRemoveAllEventListeners(ScriptEngine* engine)
+bool LLSERemoveAllEventListeners(ScriptEngine* engine)
 {
     for (auto& listeners : listenerList)
     {
@@ -321,7 +322,7 @@ bool LxlRemoveAllEventListeners(ScriptEngine* engine)
     return true;
 }
 
-bool LxlCallEventsOnHotLoad(ScriptEngine* engine)
+bool LLSECallEventsOnHotLoad(ScriptEngine* engine)
 {
     FakeCallEvent(engine, EVENT_TYPES::onServerStarted);
 
@@ -334,12 +335,16 @@ bool LxlCallEventsOnHotLoad(ScriptEngine* engine)
     return true;
 }
 
-bool LxlCallEventsOnHotUnload(ScriptEngine* engine)
+bool LLSECallEventsOnHotUnload(ScriptEngine* engine)
 {
     auto players = Level::getAllPlayers();
     for (auto& pl : players)
         FakeCallEvent(engine, EVENT_TYPES::onLeft, PlayerClass::newPlayer(pl));
-
+    for (auto& [index, cb] : ENGINE_GET_DATA(engine)->unloadCallbacks)
+    {
+        cb(engine);
+    }
+    ENGINE_GET_DATA(engine)->unloadCallbacks.clear();
     return true;
 }
 
@@ -854,14 +859,16 @@ void EnableEventListener(int eventId)
                 Actor* source = nullptr;
                 if (ev.mDamageSource->isEntitySource())
                 {
-                    source = Level::getEntity(ev.mDamageSource->getDamagingEntityUniqueID());
+                    auto getEntityUniqueID = (decltype(&ActorDamageSource::getDamagingEntityUniqueID))&ActorDamageSource::__unk_vfn_11;
                     if (ev.mDamageSource->isChildEntitySource())
-                        source = source->getOwner();
+                        source = Level::getEntity((ev.mDamageSource->*getEntityUniqueID)());
+                    else
+                        source = Level::getEntity(ev.mDamageSource->getDamagingEntityUniqueID());
                 }
 
                 CallEvent(EVENT_TYPES::onMobHurt, EntityClass::newEntity(ev.mMob),
                     source ? EntityClass::newEntity(source) : Local<Value>(),
-                    Number::newNumber(ev.mDamage));
+                          float(ev.mDamage), Number::newNumber((int)ev.mDamageSource->getCause()));
             }
             IF_LISTENED_END(EVENT_TYPES::onMobHurt)
         });
@@ -890,7 +897,7 @@ void EnableEventListener(int eventId)
                 }
 
                 CallEvent(EVENT_TYPES::onMobDie, EntityClass::newEntity((Actor*)ev.mMob),
-                    (source ? EntityClass::newEntity(source) : Local<Value>()));
+                          (source ? EntityClass::newEntity(source) : Local<Value>()), Number::newNumber((int)ev.mDamageSource->getCause()));
             }
             IF_LISTENED_END(EVENT_TYPES::onMobDie);
         });
@@ -962,7 +969,7 @@ void EnableEventListener(int eventId)
         Event::LiquidSpreadEvent::subscribe([](const LiquidSpreadEvent& ev) {
             IF_LISTENED(EVENT_TYPES::onLiquidFlow)
             {
-                CallEvent(EVENT_TYPES::onLiquidFlow, BlockClass::newBlock(ev.mBlockInstance), IntPos::newPos(ev.mTarget));
+                CallEvent(EVENT_TYPES::onLiquidFlow, BlockClass::newBlock(ev.mBlockInstance), IntPos::newPos(ev.mTarget, ev.mDimensionId));
             }
             IF_LISTENED_END(EVENT_TYPES::onLiquidFlow);
         });
@@ -1096,7 +1103,15 @@ void EnableEventListener(int eventId)
             IF_LISTENED_END(EVENT_TYPES::onConsoleOutput);
         });
         break;
-
+    case EVENT_TYPES::onMobSpawn:
+        Event::MobSpawnEvent::subscribe([](const MobSpawnEvent& ev) {
+            IF_LISTENED(EVENT_TYPES::onMobSpawn)
+            {
+                CallEvent(EVENT_TYPES::onMobSpawn, String::newString(ev.mTypeName), FloatPos::newPos(ev.mPos, ev.mDimensionId));
+            }
+            IF_LISTENED_END(EVENT_TYPES::onMobSpawn);
+        });
+        break;
     default:
         break;
     }
@@ -1115,11 +1130,11 @@ void InitBasicEventListeners()
 
             vector<string> paras;
             bool isFromOtherEngine = false;
-            string prefix = LxlFindCmdReg(true, cmd, paras, &isFromOtherEngine);
+            string prefix = LLSEFindCmdReg(true, cmd, paras, &isFromOtherEngine);
 
             if (!prefix.empty())
             {
-                //Lxl Registered Cmd
+                //LLSE Registered Cmd
                 int perm = localShareData->playerCmdCallbacks[prefix].perm;
 
                 if (player->getCommandPermissionLevel() >= perm)
@@ -1165,17 +1180,17 @@ void InitBasicEventListeners()
             // PreProcess
             if (!ProcessDebugEngine(cmd))
                 return false;
-            if (!ProcessHotManageCmd(ev.mCommand))
+            if (!ProcessOldHotManageCommand(ev.mCommand))
                 return false;
 
             //CallEvents
             vector<string> paras;
             bool isFromOtherEngine = false;
-            string prefix = LxlFindCmdReg(false, cmd, paras, &isFromOtherEngine);
+            string prefix = LLSEFindCmdReg(false, cmd, paras, &isFromOtherEngine);
 
             if (!prefix.empty())
             {
-                //Lxl Registered Cmd
+                //LLSE Registered Cmd
 
                 bool callbackRes = CallServerCmdCallback(prefix, paras);
                 IF_LISTENED(EVENT_TYPES::onConsoleCmd)
@@ -1204,6 +1219,36 @@ void InitBasicEventListeners()
             logger.error("Event Callback Failed!");
             logger.error("Uncaught Exception Detected!");
             logger.error("In Event: onConsoleCmd");
+        }
+        return true;
+    });
+
+// Plugin Hot Management
+    Event::ScriptPluginManagerEvent::subscribe_ref([](ScriptPluginManagerEvent& ev) {
+        // if (!LL::isDebugMode())
+        //     return false;
+        if (ev.pluginExtention != LLSE_PLUGINS_EXTENSION)
+            return true;
+
+        switch (ev.operation)
+        {
+        case ScriptPluginManagerEvent::Operation::Load:
+            if (PluginManager::loadPlugin(ev.target, true, true))
+                ev.success = true;
+            break;
+
+        case ScriptPluginManagerEvent::Operation::Unload:
+            if (PluginManager::unloadPlugin(ev.target))
+                ev.success = true;
+            break;
+
+        case ScriptPluginManagerEvent::Operation::Reload:
+            if (PluginManager::reloadPlugin(ev.target))
+                ev.success = true;
+            break;
+
+        default:
+            break;
         }
         return true;
     });
@@ -1246,10 +1291,19 @@ THook(void, "?tick@ServerLevel@@UEAAXXZ",
 {
     try
     {
-        for (auto engine : currentModuleEngines)
+        std::list<ScriptEngine*> tmpList;
         {
-            EngineScope enter(engine);
-            engine->messageQueue()->loopQueue(script::utils::MessageQueue::LoopType::kLoopOnce);
+            SRWLockSharedHolder lock(globalShareData->engineListLock);
+            // low efficiency
+            tmpList = globalShareData->globalEngineList;
+        }
+        for (auto engine : tmpList)
+        {
+            if (EngineManager::isValid(engine) && EngineManager::getEngineType(engine) == LLSE_BACKEND_TYPE)
+            {
+                EngineScope enter(engine);
+                engine->messageQueue()->loopQueue(script::utils::MessageQueue::LoopType::kLoopOnce);
+            }
         }
     }
     catch (...)

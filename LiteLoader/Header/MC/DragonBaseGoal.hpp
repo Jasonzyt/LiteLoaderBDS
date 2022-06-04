@@ -17,8 +17,8 @@ class DragonBaseGoal {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_DRAGONBASEGOAL
 public:
-    class DragonBaseGoal& operator=(class DragonBaseGoal const&) = delete;
-    DragonBaseGoal(class DragonBaseGoal const&) = delete;
+    class DragonBaseGoal& operator=(class DragonBaseGoal const &) = delete;
+    DragonBaseGoal(class DragonBaseGoal const &) = delete;
     DragonBaseGoal() = delete;
 #endif
 
@@ -31,6 +31,7 @@ public:
         return (this->*rv)();
     }
     */
+    MCAPI DragonBaseGoal(class Mob &);
 
 protected:
 

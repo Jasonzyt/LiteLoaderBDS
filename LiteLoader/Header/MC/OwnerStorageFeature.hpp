@@ -15,14 +15,17 @@ class OwnerStorageFeature {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_OWNERSTORAGEFEATURE
 public:
-    class OwnerStorageFeature& operator=(class OwnerStorageFeature const&) = delete;
-    OwnerStorageFeature(class OwnerStorageFeature const&) = delete;
+    class OwnerStorageFeature& operator=(class OwnerStorageFeature const &) = delete;
+    OwnerStorageFeature(class OwnerStorageFeature const &) = delete;
     OwnerStorageFeature() = delete;
 #endif
 
 public:
 
 protected:
+    MCAPI OwnerStorageFeature(class OwnerStorageFeature &&);
+    MCAPI OwnerStorageFeature(enum OwnerStorageFeature::VariadicInit, class FeatureRegistry &);
+    MCAPI bool _hasValue() const;
     MCAPI ~OwnerStorageFeature();
 
 private:

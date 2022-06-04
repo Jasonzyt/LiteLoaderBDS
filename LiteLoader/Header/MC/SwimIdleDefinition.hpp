@@ -18,14 +18,15 @@ class SwimIdleDefinition {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_SWIMIDLEDEFINITION
 public:
-    class SwimIdleDefinition& operator=(class SwimIdleDefinition const&) = delete;
-    SwimIdleDefinition(class SwimIdleDefinition const&) = delete;
-    SwimIdleDefinition() = delete;
+    class SwimIdleDefinition& operator=(class SwimIdleDefinition const &) = delete;
+    SwimIdleDefinition(class SwimIdleDefinition const &) = delete;
 #endif
 
 public:
     /*0*/ virtual ~SwimIdleDefinition();
-    MCAPI static void buildSchema(std::string const&, class std::shared_ptr<class JsonUtil::JsonSchemaObjectNode<class JsonUtil::EmptyClass, class SwimIdleDefinition> >&);
+    MCAPI SwimIdleDefinition();
+    MCAPI void initialize(class EntityContext &, class SwimIdleGoal &);
+    MCAPI static void buildSchema(std::string const &, class std::shared_ptr<class JsonUtil::JsonSchemaObjectNode<class JsonUtil::EmptyClass, class SwimIdleDefinition>> &);
 
 protected:
 

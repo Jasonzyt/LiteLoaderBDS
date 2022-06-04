@@ -17,13 +17,13 @@ struct RopeParams {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ROPEPARAMS
 public:
-    struct RopeParams& operator=(struct RopeParams const&) = delete;
-    RopeParams(struct RopeParams const&) = delete;
-    RopeParams() = delete;
+    struct RopeParams& operator=(struct RopeParams const &) = delete;
+    RopeParams(struct RopeParams const &) = delete;
 #endif
 
 public:
-    MCAPI RopeParams(class Vec3 const&, class Vec3 const&, float);
+    MCAPI RopeParams(class Vec3 const &, class Vec3 const &, float);
+    MCAPI RopeParams();
     MCAPI void leadInit();
 
 protected:

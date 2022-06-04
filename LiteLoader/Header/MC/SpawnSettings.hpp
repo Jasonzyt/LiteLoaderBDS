@@ -15,12 +15,12 @@ struct SpawnSettings {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_SPAWNSETTINGS
 public:
-    struct SpawnSettings& operator=(struct SpawnSettings const&) = delete;
-    SpawnSettings(struct SpawnSettings const&) = delete;
+    struct SpawnSettings& operator=(struct SpawnSettings const &) = delete;
+    SpawnSettings(struct SpawnSettings const &) = delete;
+    SpawnSettings() = delete;
 #endif
 
 public:
-    MCAPI SpawnSettings();
     MCAPI ~SpawnSettings();
 
 protected:

@@ -1,16 +1,14 @@
 ## [LiteLoader Release Note]
-LiteLoaderBDS-2.1.1 update has been released, automatic update has been pushed
-This is an important bug fix update! 
+This version is an important update.Please update the SDK in time for developers!
 
-## [Changes]
-New teleportFace API
+## [Major]
+- Performance Enhancement
 
-## [Bug Fix]
-Fix the bug that the door cannot be placed in some cases
-Repair the problem of logger crash
-Repair the problem of offset position of pl.blockPos
-Repair the problem of CustomForm of script engine
-Repair the possible failure and crash of AddonInstaller.
-Repair the problem of crash caused by explosion
-Repair the problem of facing to the sky after teleport
-Repair some spelling errors
+<img src="https://s1.ax1x.com/2022/05/21/OjVmVI.png">
+
+## [New features]
+- Add LLSE ll.hasExported API
+
+## [Bug Fixes]
+- Fix BlockActor::refreshData
+

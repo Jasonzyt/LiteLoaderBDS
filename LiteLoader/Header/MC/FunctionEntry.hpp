@@ -17,14 +17,16 @@ class FunctionEntry {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_FUNCTIONENTRY
 public:
-    class FunctionEntry& operator=(class FunctionEntry const&) = delete;
-    FunctionEntry(class FunctionEntry const&) = delete;
+    class FunctionEntry& operator=(class FunctionEntry const &) = delete;
+    FunctionEntry(class FunctionEntry const &) = delete;
     FunctionEntry() = delete;
 #endif
 
 public:
     /*0*/ virtual ~FunctionEntry();
-    /*1*/ virtual void execute(class FunctionManager&, class CommandOrigin const&, enum FunctionQueueOrder);
+    /*1*/ virtual void execute(class FunctionManager &, class CommandOrigin const &, enum FunctionQueueOrder);
+    MCAPI FunctionEntry(std::vector<std::unique_ptr<class IFunctionEntry>> &&, enum FunctionState);
+    MCAPI FunctionEntry(enum FunctionState);
     MCAPI enum FunctionState getErrorState() const;
 
 protected:

@@ -17,13 +17,15 @@ class ScopedAutoreleasePool {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_SCOPEDAUTORELEASEPOOL
 public:
-    class ScopedAutoreleasePool& operator=(class ScopedAutoreleasePool const&) = delete;
-    ScopedAutoreleasePool(class ScopedAutoreleasePool const&) = delete;
+    class ScopedAutoreleasePool& operator=(class ScopedAutoreleasePool const &) = delete;
+    ScopedAutoreleasePool(class ScopedAutoreleasePool const &) = delete;
 #endif
 
 public:
     MCAPI ScopedAutoreleasePool();
     MCAPI void drain();
+    MCAPI void drainNow();
+    MCAPI void reset();
     MCAPI ~ScopedAutoreleasePool();
 
 protected:

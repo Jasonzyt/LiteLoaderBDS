@@ -17,8 +17,8 @@ class WorldTemplatePackManifest {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_WORLDTEMPLATEPACKMANIFEST
 public:
-    class WorldTemplatePackManifest& operator=(class WorldTemplatePackManifest const&) = delete;
-    WorldTemplatePackManifest(class WorldTemplatePackManifest const&) = delete;
+    class WorldTemplatePackManifest& operator=(class WorldTemplatePackManifest const &) = delete;
+    WorldTemplatePackManifest(class WorldTemplatePackManifest const &) = delete;
 #endif
 
 public:
@@ -31,8 +31,10 @@ public:
         return (this->*rv)();
     }
     */
+    MCAPI WorldTemplatePackManifest(class PackManifest &&);
     MCAPI WorldTemplatePackManifest();
     MCAPI enum GameType getGameType() const;
+    MCAPI void setGameType(enum GameType);
 
 protected:
 

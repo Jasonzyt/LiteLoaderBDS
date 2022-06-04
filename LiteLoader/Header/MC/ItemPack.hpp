@@ -15,12 +15,13 @@ class ItemPack {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ITEMPACK
 public:
-    class ItemPack& operator=(class ItemPack const&) = delete;
-    ItemPack(class ItemPack const&) = delete;
-    ItemPack() = delete;
+    class ItemPack& operator=(class ItemPack const &) = delete;
+    ItemPack(class ItemPack const &) = delete;
 #endif
 
 public:
+    MCAPI ItemPack();
+    MCAPI void add(class RecipeIngredient const &, int);
     MCAPI ~ItemPack();
 
 protected:

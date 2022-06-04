@@ -21,13 +21,20 @@ enum ConnectionFailureReason;
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ICONNECTIONEVENTING
 public:
-    class IConnectionEventing& operator=(class IConnectionEventing const&) = delete;
-    IConnectionEventing(class IConnectionEventing const&) = delete;
+    class IConnectionEventing& operator=(class IConnectionEventing const &) = delete;
+    IConnectionEventing(class IConnectionEventing const &) = delete;
     IConnectionEventing() = delete;
 #endif
 
 public:
     /*0*/ virtual ~IConnectionEventing();
+    /*
+    inline  ~IConnectionEventing(){
+         (IConnectionEventing::*rv)();
+        *((void**)&rv) = dlsym("??1IConnectionEventing@@UEAA@XZ");
+        return (this->*rv)();
+    }
+    */
 
 protected:
 

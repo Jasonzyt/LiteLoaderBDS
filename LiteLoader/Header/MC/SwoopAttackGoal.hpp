@@ -17,8 +17,8 @@ class SwoopAttackGoal {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_SWOOPATTACKGOAL
 public:
-    class SwoopAttackGoal& operator=(class SwoopAttackGoal const&) = delete;
-    SwoopAttackGoal(class SwoopAttackGoal const&) = delete;
+    class SwoopAttackGoal& operator=(class SwoopAttackGoal const &) = delete;
+    SwoopAttackGoal(class SwoopAttackGoal const &) = delete;
     SwoopAttackGoal() = delete;
 #endif
 
@@ -28,9 +28,17 @@ public:
     /*2*/ virtual bool canContinueToUse();
     /*3*/ virtual void __unk_vfn_3();
     /*4*/ virtual void start();
-    /*5*/ virtual void stop();
+    /*5*/ virtual void __unk_vfn_5();
     /*6*/ virtual void tick();
-    /*7*/ virtual void appendDebugInfo(std::string&) const;
+    /*7*/ virtual void appendDebugInfo(std::string &) const;
+    /*
+    inline void stop(){
+        void (SwoopAttackGoal::*rv)();
+        *((void**)&rv) = dlsym("?stop@SwoopAttackGoal@@UEAAXXZ");
+        return (this->*rv)();
+    }
+    */
+    MCAPI SwoopAttackGoal(class Mob &);
 
 protected:
 

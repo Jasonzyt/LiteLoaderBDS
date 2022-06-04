@@ -5,9 +5,7 @@
 
 #define BEFORE_EXTRA
 // Include Headers or Declare Types Here
-
-enum PlayerListPacketType { Add,
-                            Remove };
+#include "SerializedSkin.hpp"
 
 #undef BEFORE_EXTRA
 
@@ -16,23 +14,27 @@ class PlayerListEntry {
 #define AFTER_EXTRA
 // Add Member There
 public:
-    std::vector<class PlayerListEntry> entries;
-    enum PlayerListPacketType type;
+    ActorUniqueID uid;
+    mce::UUID uuid;
+    std::string name, xuid, platform_online_id;
+    enum BuildPlatform platform;
+    SerializedSkin skin;
+    bool teacher, host;
 
 #undef AFTER_EXTRA
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_PLAYERLISTENTRY
 public:
-    class PlayerListEntry& operator=(class PlayerListEntry const&) = delete;
-    PlayerListEntry(class PlayerListEntry const&) = delete;
+    class PlayerListEntry& operator=(class PlayerListEntry const &) = delete;
+    PlayerListEntry(class PlayerListEntry const &) = delete;
     PlayerListEntry() = delete;
 #endif
 
 public:
-    MCAPI PlayerListEntry(class Player const&);
+    MCAPI PlayerListEntry(class Player const &);
     MCAPI class PlayerListEntry clone() const;
-    MCAPI bool read(class ReadOnlyBinaryStream&);
-    MCAPI void write(class BinaryStream&) const;
+    MCAPI bool read(class ReadOnlyBinaryStream &);
+    MCAPI void write(class BinaryStream &) const;
     MCAPI ~PlayerListEntry();
 
 protected:

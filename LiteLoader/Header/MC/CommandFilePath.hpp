@@ -15,12 +15,14 @@ class CommandFilePath {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COMMANDFILEPATH
 public:
-    class CommandFilePath& operator=(class CommandFilePath const&) = delete;
-    CommandFilePath(class CommandFilePath const&) = delete;
+    class CommandFilePath& operator=(class CommandFilePath const &) = delete;
+    CommandFilePath(class CommandFilePath const &) = delete;
 #endif
 
 public:
     MCAPI CommandFilePath();
+    MCAPI int findInvalidCharacter() const;
+    MCAPI std::string const & getText() const;
     MCAPI ~CommandFilePath();
 
 protected:

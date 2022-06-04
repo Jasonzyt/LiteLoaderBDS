@@ -3,6 +3,7 @@
 #include <Main/LiteLoader.h>
 #include <Utils/DbgHelper.h>
 #include <LoggerAPI.h>
+#include <I18nAPI.h>
 #include <Psapi.h>
 #include <string>
 
@@ -21,7 +22,7 @@ string GetLastErrorMessage() {
     return res;
 }
 
-//Tool
+// Tool
 wchar_t *str2cwstr(const string &str) {
     auto len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
     auto *buffer = new wchar_t[len + 1];
@@ -86,7 +87,7 @@ bool NewProcess(const std::string &process, std::function<void(int, std::string)
                 callback((int) exitCode, strOutput);
         }
         catch (const seh_exception &e) {
-            logger.error("SEH Uncaught Exception Detected!\n{}", e.what());
+            logger.error("SEH Uncaught Exception Detected!\n{}", TextEncoding::toUTF8(e.what()));
             logger.error("In NewProcess callback");
             PrintCurrentStackTraceback();
         }
@@ -100,7 +101,7 @@ bool NewProcess(const std::string &process, std::function<void(int, std::string)
     return true;
 }
 
-std::pair<int,string> NewProcessSync(const std::string& process, int timeLimit, bool noReadOutput)
+std::pair<int, string> NewProcessSync(const std::string& process, int timeLimit, bool noReadOutput)
 {
     SECURITY_ATTRIBUTES sa;
     HANDLE hRead, hWrite;
@@ -155,5 +156,12 @@ std::pair<int,string> NewProcessSync(const std::string& process, int timeLimit, 
 string GetModulePath(HMODULE handler) {
     wchar_t buf[MAX_PATH] = { 0 };
     GetModuleFileNameEx(GetCurrentProcess(), handler, buf, MAX_PATH);
-    return wstr2str(wstring(buf));
+    return wstr2str(std::wstring(buf));
+}
+
+string GetModuleName(HMODULE handler)
+{
+    wchar_t buf[MAX_PATH] = { 0 };
+    GetModuleFileNameEx(GetCurrentProcess(), handler, buf, MAX_PATH);
+    return std::filesystem::path(buf).filename().u8string();
 }

@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 #include <cctype>
+#include <fstream>
 #include <MC/Actor.hpp>
 #include <MC/ServerPlayer.hpp>
 #include <MC/Spawner.hpp>
@@ -12,12 +13,17 @@
 #include <MC/CommandContext.hpp>
 #include <MC/CompoundTag.hpp>
 #include <MC/Dimension.hpp>
+#include <MC/DropperBlockActor.hpp>
 #include <MC/ItemActor.hpp>
 #include <MC/ItemStack.hpp>
 #include <MC/Level.hpp>
 #include <MC/MinecraftCommands.hpp>
 #include <MC/Tick.hpp>
 #include <MC/Packet.hpp>
+#include <MC/PropertiesSettings.hpp>
+#include <MC/LoopbackPacketSender.hpp>
+#include <MC/ServerCommandOrigin.hpp>
+#include <MC/PlayerCommandOrigin.hpp>
 
 
 Actor* Level::getEntity(ActorUniqueID uniqueId)
@@ -166,7 +172,7 @@ BlockActor* Level::getBlockEntity(const BlockPos& pos, BlockSource* blockSource)
 
 bool Level::setBlock(const BlockPos& pos, int dim, Block* block) {
     BlockSource* bs = getBlockSource(dim);
-    return bs->setBlock(pos, *block, 3, nullptr); // updateFlag = 3 from IDA SetBlockCommand::execute()
+    return bs->setBlock(pos, *block, 3, nullptr,nullptr); // updateFlag = 3 from IDA SetBlockCommand::execute()
 }
 
 bool Level::setBlock(const BlockPos& pos, int dim, const string& name, unsigned short tileData) {
@@ -196,55 +202,60 @@ bool Level::hasContainer(Vec3 pos, int dim)
     return getContainer(pos,dim) != nullptr;
 }
 
-class DropperBlockActor;
 Container* Level::getContainer(Vec3 pos, int dim)
 {
     // VirtualCall<Container*>(getBlockEntity(), 224); // IDA ChestBlockActor::`vftable'{for `RandomizableBlockActorContainerBase'}
     
     // This function didn't use 'this' pointer
-    Container* container = SymCall("?_getContainerAt@DropperBlockActor@@AEAAPEAVContainer@@AEAVBlockSource@@AEBVVec3@@@Z",
-        Container*, DropperBlockActor*, BlockSource*, Vec3*)(nullptr, Level::getBlockSource(dim), &pos);
-
-    return container;
+    return ((DropperBlockActor*)nullptr)->_getContainerAt(*Level::getBlockSource(dim), pos);
 }
 
 Actor* Level::getDamageSourceEntity(ActorDamageSource* ads) {
-    char v83;
     ActorUniqueID v6 = ads->getDamagingEntityUniqueID();
     return Global<Level>->getEntity(v6);
 }
 
 void* Level::ServerCommandOrigin::fake_vtbl[26];
-static_assert(offsetof(Level::ServerCommandOrigin, Perm) == 64);
 
-bool Level::executeCommand(const string& cmd) {
-    ServerCommandOrigin origin;
-    return MinecraftCommands::_runcmd(&origin, cmd);
+CompoundTag& getServerOriginTag()
+{
+    static auto cached = CompoundTag::fromSNBT(R"({"CommandPermissionLevel":4b,"DimensionId":"Overworld","OriginType":7b,"RequestId":"00000000-0000-0000-0000-000000000000"})");
+    return *cached;
 }
 
-std::unordered_map<void*, string*> resultOfOrigin;
+std::unique_ptr<CompoundTag> getPlayerOriginTag(Player& player)
+{
+    static auto cached = CompoundTag::fromSNBT(R"({"OriginType":0b,"PlayerId":0l})");
+    auto tag = cached->clone();
+    tag->putInt64("PlayerId", player.getUniqueID());
+    return std::move(tag);
+}
 
-std::pair<bool, string> Level::executeCommandEx(const string& cmd) {
-    ServerCommandOrigin origin;
+bool Level::executeCommand(const string& cmd) {
+    auto origin = ::ServerCommandOrigin::load(getServerOriginTag(), *Global<ServerLevel>);
+    return MinecraftCommands::_runcmd(std::move(origin), cmd);
+}
+
+std::unordered_map<CommandOrigin const*, string*> resultOfOrigin = {};
+
+std::pair<bool, string> Level::executeCommandEx(const string& cmd)
+{
+    auto origin = ::ServerCommandOrigin::load(getServerOriginTag(), *Global<ServerLevel>);
     string val;
-    resultOfOrigin[&origin] = &val;
-    bool rv = MinecraftCommands::_runcmd(&origin, cmd);
+    auto ptr = origin.get();
+    resultOfOrigin[ptr] = &val;
+    bool rv = MinecraftCommands::_runcmd(std::move(origin), cmd);
+    if (resultOfOrigin.count(ptr))
+        resultOfOrigin.erase(ptr);
     return {rv, std::move(val)};
 }
 
 
 static void* FAKE_PORGVTBL[26];
 bool Level::executeCommandAs(Player* pl, const string& cmd) {
-    void** filler[5];
-    ServerCommandOrigin origin;
-    SymCall("??0PlayerCommandOrigin@@QEAA@AEAVPlayer@@@Z", void, void*, ServerPlayer*)(
-        filler, (ServerPlayer*)pl);
-    if (FAKE_PORGVTBL[1] == nullptr) {
-        memcpy(FAKE_PORGVTBL, ((void**)filler[0]) - 1, sizeof(FAKE_PORGVTBL));
-        FAKE_PORGVTBL[1] = (void*)dummy;
-    }
-    filler[0] = FAKE_PORGVTBL + 1;
-    return MinecraftCommands::_runcmd(filler, cmd);
+    auto tag = getPlayerOriginTag(*pl);
+    auto origin = PlayerCommandOrigin::load(*tag, *Global<Level>);
+    return MinecraftCommands::_runcmd(std::move(origin), cmd);
 }
 
 
@@ -314,11 +325,12 @@ std::vector<Actor*> Level::getAllEntities()
 Player* Level::getPlayer(const string& info) {
     string target{info};
     std::transform(target.begin(), target.end(), target.begin(), ::tolower); //lower case the string
-    int delta = INT_MAX;                                                        //c++ int max
+    size_t delta = UINT64_MAX;                                                  //c++ int max
     Player* found = nullptr;
     Global<Level>->forEachPlayer([&](Player& sp) -> bool {
         Player* p = &sp;
-        if (p->getXuid() == target) {
+        if (p->getXuid() == target || p->getRealName() == info)
+        {
             found = p;
             return false;
         }
@@ -329,10 +341,9 @@ Player* Level::getPlayer(const string& info) {
         //模糊匹配
         if (pName.find(target) == 0) {
             //0 ís the index where the "target" appear in "pName"
-            int curDelta = pName.length() - target.length();
+            size_t curDelta = pName.length() - target.length();
             if (curDelta == 0) {
                 found = p;
-                return false;
             }
 
             if (curDelta < delta) {
@@ -356,6 +367,14 @@ Actor* Level::spawnMob(Vec3 pos, int dimId, std::string name) {
     return sp->spawnMob(pos, dimId, std::move(name));
 }
 
+Actor* Level::cloneMob(Vec3 pos, int dimId, Actor* ac)
+{
+    Spawner* sp = &Global<Level>->getSpawner();
+    Mob* mob = sp->spawnMob(pos, dimId, std::move(ac->getTypeName()));
+    mob->setNbt(ac->getNbt().get());
+    return mob;
+}
+
 Actor* Level::spawnItem(Vec3 pos, int dimId, ItemStack* item) {
     Spawner* sp = &Global<Level>->getSpawner();
     return sp->spawnItem(pos, dimId, item);
@@ -366,39 +385,62 @@ bool Level::createExplosion(Vec3 pos, int dimId, Actor* source, float radius, bo
     return true;
 }
 
-ItemStack* Level::getItemStackFromId(short a2, int a3) {
-    // TODO: Should item be constructed
-    Item* itemCreate = (Item*)new char[552];
-    Item* item = SymCall("??0Item@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@F@Z", Item*, Item*, string, short)(itemCreate, "", a2);
-    auto* a = (ItemStack*)new char[272];
-    ItemStack* itemStackCreate = SymCall("??0ItemStack@@QEAA@XZ", ItemStack*, ItemStack*)(a);
-    ItemStack* itemStack = SymCall("??0ItemStack@@QEAA@AEBVItem@@HH@Z", ItemStack*, ItemStack*, Item &, int, int)(itemStackCreate, *item, 1, a3);
-    return itemStack;
+#include <MC/ItemRegistry.hpp>
+ItemStack* Level::getItemStackFromId(short itemId, int aux) {
+    auto item = ItemRegistry::getItem(itemId);
+    if (item)
+        return new ItemStack(*item, 1, aux);
+    return nullptr;
 }
 
 void Level::broadcastText(const string& a1, TextType ty) 
 {
-    auto players = getAllPlayers();
-    for (auto& sp : players) 
-    {
-        sp->sendTextPacket(a1, ty);
-    }
+    if (!Global<Level>)
+        return;
+    Global<Level>->forEachPlayer([&](Player& sp) -> bool {
+        sp.sendTextPacket(a1, ty);
+        return true;
+    });
 }
 
 void Level::broadcastTitle(const string& text, TitleType Type, int FadeInDuration, int RemainDuration, int FadeOutDuration)
 {
-    auto players = getAllPlayers();
-    for (auto& sp : players) 
-    {
-        sp->sendTitlePacket(text, Type, FadeInDuration, RemainDuration, FadeOutDuration);
-    }
+    if (!Global<Level>)
+        return;
+    Global<Level>->forEachPlayer([&](Player& sp) -> bool {
+        sp.sendTitlePacket(text, Type, FadeInDuration, RemainDuration, FadeOutDuration);
+        return true;
+    });
 }
 
 void Level::sendPacketForAllPlayer(Packet& pkt)
 {
-    auto players = getAllPlayers();
-    for (auto& sp : players)
+    if (!Global<Level>)
+        return;
+    auto sender = (LoopbackPacketSender*)Global<Level>->getPacketSender();
+    if (sender)
+        return sender->sendBroadcast(pkt);
+}
+
+std::string Level::getCurrentLevelName()
+{
+    if (Global<PropertiesSettings>)
+        return Global<PropertiesSettings>->getLevelName();
+    std::ifstream fin("server.properties");
+    string buf;
+    while (getline(fin, buf))
     {
-        sp->sendNetworkPacket(pkt);
+        if (buf.find("level-name=") != string::npos)
+        {
+            if (buf.back() == '\n') buf.pop_back();
+            if (buf.back() == '\r') buf.pop_back();
+            return buf.substr(11);
+        }
     }
+    return "";
+}
+
+std::string Level::getCurrentLevelPath()
+{
+    return "./worlds/" + getCurrentLevelName();
 }

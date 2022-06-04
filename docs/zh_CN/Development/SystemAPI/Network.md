@@ -5,11 +5,13 @@
 
 ### 发送一个异步HTTP(s) Get请求  
 
-`network.httpGet(url,callback)`
+`network.httpGet(url[,header],callback)`
 
 - 参数：
   - url : `String`  
     请求的目标地址（包括 Get 请求附带的参数）
+  - header : `Object`  
+    请求头（包括 Get 请求Request header）  
   - callback : `Function`  
     当请求返回时执行的回调函数，用于回传HTTP(s)响应结果。
 - 返回值：是否成功发送请求
@@ -28,11 +30,13 @@
 
 ### 发送一个异步HTTP(s) Post请求  
 
-`network.httpPost(url,data,type,callback)`
+`network.httpPost(url[,header],data,type,callback)`
 
 - 参数：
   - url : `String`  
     请求的目标地址
+  - header : `Object`  
+    请求头（包括 Post 请求Request header）  
   - data : `String`  
     发送的数据
   - type : `String`  
@@ -98,6 +102,25 @@
     要连接的目标地址，形如`ws://hostname[:port][/path/path][?query=value]`
 - 返回值：是否成功连接
 - 返回值类型：`Boolean` 
+
+<br>
+
+#### 异步创建连接
+
+`wsc.connectAsync(target,callback)`
+
+- 参数：
+  - target : `String`  
+    要连接的目标地址，形如`ws://hostname[:port][/path/path][?query=value]`
+  - callback : `Function`
+    当连接成功或者失败时执行的回调函数。
+- 返回值：是否成功开始尝试连接
+- 返回值类型：`Boolean` 
+
+注：参数callback的回调函数原型：`function(success)`  
+
+- success : `Boolean`    
+  WebSocket 连接是否成功
 
 <br>
 

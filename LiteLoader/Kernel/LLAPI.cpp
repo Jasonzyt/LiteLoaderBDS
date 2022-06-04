@@ -10,63 +10,24 @@
 
 using namespace std;
 
-std::string LL::getDataPath(const std::string &pluginName) {
-    filesystem::create_directory("plugins\\LiteLoader");
-    return "plugins\\LiteLoader\\" + pluginName;
+std::string LL::getDataPath(const std::string &pluginName)
+{
+    string dataPath = "plugins\\LiteLoader\\" + pluginName;
+    if (!filesystem::exists(str2wstr(dataPath)))
+    {
+        std::error_code ec;
+        filesystem::create_directories(str2wstr(dataPath), ec);
+    }
+    return dataPath;
 }
 
 std::string LL::getLoaderVersionString() {
     return getLoaderVersion().toString();
 }
 
-typedef struct _VS_VERSIONINFO {
-    WORD  wLength;
-    WORD  wValueLength;
-    WORD  wType;
-    WCHAR* szKey;
-    WORD*  Padding1;
-    VS_FIXEDFILEINFO Value;
-    WORD*  Padding2;
-    WORD*  Children;
-}VS_VERSIONINFO;
-
 LL::Version LL::getLoaderVersion()
 {
-    DWORD   verBufferSize;
-    char    verBuffer[2048];
-    TCHAR filePath[MAX_PATH * 4] = { 0 };
-
-    if (GetModuleFileName(GetCurrentModule(), filePath, sizeof(filePath)/2) == 0)
-        return LL::Version();
-
-    verBufferSize = GetFileVersionInfoSize(filePath, NULL);
-    if (verBufferSize > 0 && verBufferSize <= sizeof(verBuffer))
-    {
-        if (GetFileVersionInfo(filePath, NULL, verBufferSize, verBuffer))
-        {
-            UINT length;
-            VS_FIXEDFILEINFO* verInfo = NULL;
-
-            if (TRUE == VerQueryValue(verBuffer, TEXT("\\"), reinterpret_cast<LPVOID*>(&verInfo), &length))
-            {
-                if (LITELOADER_VERSION_STATUS == LL::Version::Beta) {
-                    return Version(HIWORD(verInfo->dwProductVersionMS), LOWORD(verInfo->dwProductVersionMS),
-                                   HIWORD(verInfo->dwProductVersionLS), LL::Version::Beta);
-                }
-                else if (LITELOADER_VERSION_STATUS == LL::Version::Dev)
-                {
-                    return Version(HIWORD(verInfo->dwProductVersionMS), LOWORD(verInfo->dwProductVersionMS),
-                                   HIWORD(verInfo->dwProductVersionLS), LL::Version::Dev);
-                }
-                else
-                {
-                    return Version(HIWORD(verInfo->dwProductVersionMS), LOWORD(verInfo->dwProductVersionMS),
-                                   HIWORD(verInfo->dwProductVersionLS));
-                }
-            }
-        }
-    }
-    return Version();
+    return Version(LITELOADER_VERSION_MAJOR, LITELOADER_VERSION_MINOR, LITELOADER_VERSION_REVISION, (LL::Version::Status)LITELOADER_VERSION_STATUS);
 }
 
 bool LL::isDebugMode() {
@@ -141,4 +102,19 @@ LL::Version LL::Version::parse(const std::string &str) {
         ver.revision = stoi(res[2]);
     
     return ver;
+}
+
+LL::ServerStatus LL::getServerStatus()
+{
+    return (LL::ServerStatus)(LL::globalConfig.serverStatus);
+}
+
+bool LL::isServerStarting()
+{
+    return getServerStatus() == LL::ServerStatus::Starting;
+}
+
+bool LL::isServerStopping()
+{
+    return getServerStatus() == LL::ServerStatus::Stopping;
 }

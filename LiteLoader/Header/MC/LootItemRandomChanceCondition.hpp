@@ -2,6 +2,7 @@
 #pragma once
 #define AUTO_GENERATED
 #include "../Global.h"
+#include "Json.hpp"
 
 #define BEFORE_EXTRA
 // Include Headers or Declare Types Here
@@ -17,14 +18,15 @@ class LootItemRandomChanceCondition {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_LOOTITEMRANDOMCHANCECONDITION
 public:
-    class LootItemRandomChanceCondition& operator=(class LootItemRandomChanceCondition const&) = delete;
-    LootItemRandomChanceCondition(class LootItemRandomChanceCondition const&) = delete;
+    class LootItemRandomChanceCondition& operator=(class LootItemRandomChanceCondition const &) = delete;
+    LootItemRandomChanceCondition(class LootItemRandomChanceCondition const &) = delete;
     LootItemRandomChanceCondition() = delete;
 #endif
 
 public:
     /*0*/ virtual ~LootItemRandomChanceCondition();
-    /*1*/ virtual bool applies(class Random&, class LootTableContext&);
+    /*1*/ virtual bool applies(class Random &, class LootTableContext &);
+    MCAPI static std::unique_ptr<class LootItemCondition> deserialize(class Json::Value);
 
 protected:
 

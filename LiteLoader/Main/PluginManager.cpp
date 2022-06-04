@@ -6,6 +6,7 @@
 #include <Utils/StringHelper.h>
 #include <Utils/WinHelper.h>
 #include <Utils/STLHelper.h>
+#include <I18nAPI.h>
 #include <MC/Level.hpp>
 #include <MC/Player.hpp>
 #include <Windows.h>
@@ -17,23 +18,23 @@ using namespace std;
 extern Logger logger;
 std::unordered_map<std::string, LL::Plugin> plugins;
 
-bool LL::PluginManager::registerPlugin(HMODULE handler, std::string name, std::string introduction, LL::Version version,
+bool LL::PluginManager::registerPlugin(HMODULE handler, std::string name, std::string desc, LL::Version version,
                     std::map<std::string, std::string> others)
 {
     if (handler != nullptr)             // DLL Plugin
     {
         if (getPlugin(handler) != nullptr)
         {
-            erase_if(plugins, [&handler](auto& data) {               //Allow plugins to overwrite their own plugin registory
+            erase_if(plugins, [&handler](auto& data) {               // Allow plugins to overwrite their own plugin registory
                 return data.second.handler == handler;
             });                           
         }
-        else if (getPlugin(name) != nullptr) {          
-            return false;                                      //Reject overwriting other's data
+        else if (getPlugin(name) != nullptr) {
+            return false;                                      // Reject overwriting other's data
         }
     }
 
-    LL::Plugin plugin{name, introduction, version, others};
+    LL::Plugin plugin{name, desc, version, others};
     plugin.handler = handler;
     try
     {
@@ -47,7 +48,7 @@ bool LL::PluginManager::registerPlugin(HMODULE handler, std::string name, std::s
 
     try
     {
-        plugin.filePath = filesystem::path(others.at("PluginFilePath")).lexically_normal().u8string();
+        plugin.filePath = filesystem::path(str2wstr(others.at("PluginFilePath"))).lexically_normal().u8string();
         others.erase("PluginFilePath");
     }
     catch (...)
@@ -62,21 +63,22 @@ bool LL::PluginManager::registerPlugin(HMODULE handler, std::string name, std::s
 
 bool LL::PluginManager::unRegisterPlugin(std::string name)
 {
-    if (getPlugin(name) == nullptr)
+    auto plugin = getPlugin(name);
+    if (plugin == nullptr)
     { 
         return false;
     }
     else
     {
-        plugins.erase(name);
+        plugins.erase(plugin->name);
         return true;
     }
 }
 
-//Helper
+// Helper
 LL::Plugin* GetPlugin_Raw(std::string name, bool includeScriptPlugin) {
     for (auto& it : plugins) {
-        if (it.second.name == name)
+        if (it.second.name == name || filesystem::path(str2wstr(it.second.filePath)).filename().u8string() == name)
         {
             if (!includeScriptPlugin && it.second.type == LL::Plugin::PluginType::ScriptPlugin)
                 continue;
@@ -92,7 +94,7 @@ LL::Plugin* LL::PluginManager::getPlugin(std::string name, bool includeScriptPlu
         return res;
     try
     {
-        name = filesystem::path(name).filename().u8string();
+        name = filesystem::path(str2wstr(name)).filename().replace_extension("").u8string();
         return GetPlugin_Raw(name, includeScriptPlugin);
     }
     catch(...)
@@ -129,159 +131,276 @@ std::unordered_map<std::string, LL::Plugin*> LL::PluginManager::getAllPlugins(bo
 
 bool LL::PluginManager::loadPlugin(string pluginFilePath, bool outputResult, bool isHotLoad)
 {
-    filesystem::path path(filesystem::path(pluginFilePath).lexically_normal());
-    pluginFilePath = path.u8string();
-
-    string ext = path.extension().u8string();
-    if (ext != ".dll")
+    // if (!LL::isDebugMode())
+    //     return false;
+    try
     {
-        if (LLSE_VALID_PLUGIN_EXTENSIONS.find(ext) != LLSE_VALID_PLUGIN_EXTENSIONS.end())   //Script Plugin
+        filesystem::path path(filesystem::path(str2wstr(pluginFilePath)).lexically_normal());
+        pluginFilePath = path.u8string();
+
+        string ext = path.extension().u8string();
+        if (ext != ".dll")
         {
-            if (pluginFilePath.find(LLSE_COMMAND_FINISHED_SYMBOL) == string::npos && outputResult)       //not finished
+            if (LLSE_VALID_PLUGIN_EXTENSIONS.find(ext) != LLSE_VALID_PLUGIN_EXTENSIONS.end())   //LLSE Script Plugin
             {
-                logger.error("Fail to load script plugin {}!", pluginFilePath);
+                Event::ScriptPluginManagerEvent ev;
+                ev.operation = Event::ScriptPluginManagerEvent::Operation::Load;
+                ev.target = pluginFilePath;
+                ev.pluginExtention = ext;
+                ev.call();
+
+                return ev.success;
+            }
+            else if (outputResult)
+                logger.error("You need to give a correct type of file!");
+            return false;
+        }
+
+        if (pluginFilePath.find("/") == string::npos && pluginFilePath.find("\\") == string::npos
+            && loadPlugin("plugins/" + pluginFilePath))
+        {
+            if (outputResult)
+                logger.error("No valid plugin found at {}!", pluginFilePath);
+            return false;
+        }
+
+        string pluginFileName = path.filename().u8string();
+        auto lib = LoadLibrary(str2wstr(pluginFilePath).c_str());
+        if (lib)
+        {
+            if (getPlugin(lib) == nullptr) {
+                if (!RegisterPlugin(lib, pluginFileName, pluginFileName, LL::Version(1, 0, 0), {}))
+                {
+                    logger.error("Failed to register plugin {}!", pluginFilePath);
+                    if (getPlugin(pluginFileName))
+                        logger.error("A plugin named {} has been registered", pluginFileName);
+                    return false;
+                }
+            };
+        }
+        else
+        {
+            if (outputResult)
+                logger.error("Fail to load the plugin {}!", pluginFileName);
+            return false;
+        }
+
+        if (!getPlugin(lib))
+            return false;
+        //  Call onPostInit
+        auto fn = GetProcAddress(getPlugin(lib)->handler, "onPostInit");
+        if (fn) {
+            try {
+                ((void (*)()) fn)();
+                return true;
+            }
+            catch (std::exception& e) {
+                if (outputResult)
+                {
+                    logger.error("Plugin <{}> throws an std::exception in onPostInit", pluginFileName);
+                    logger.error("Exception: ", TextEncoding::toUTF8(e.what()));
+                    logger.error("Fail to init this plugin!");
+                }
                 return false;
             }
-            else
-                return true;
+            catch (...) {
+                if (outputResult)
+                {
+                    logger.error("Plugin <{}> throws an exception in onPostInit", pluginFileName);
+                    logger.error("Fail to init this plugin!");
+                }
+                return false;
+            }
         }
         else if (outputResult)
-            logger.error("You need to give a correct type of file!");
-        return false;
-    }
-
-    if (pluginFilePath.find("/") == string::npos && pluginFilePath.find("\\") == string::npos
-        && loadPlugin("plugins/" + pluginFilePath))
-    {
-        if (outputResult)
-            logger.error("No valid plugin found at {}!", pluginFilePath);
-        return false;
-    }
-
-    string pluginFileName = path.filename().u8string();
-    auto lib = LoadLibrary(str2wstr(pluginFilePath).c_str());
-    if (lib)
-    {
-        if (getPlugin(lib) == nullptr)
-            RegisterPlugin(lib, pluginFileName, pluginFileName, LL::Version(1, 0, 0), {});
-    }
-    else
-    {
-        if (outputResult)
-            logger.error("Fail to load the plugin {}!", pluginFileName);
-        return false;
-    }
-
-    //  Call onPostInit
-    auto fn = GetProcAddress(getPlugin(lib)->handler, "onPostInit");
-    if (fn) {
-        try {
-            ((void (*)()) fn)();
-            return true;
-        }
-        catch (std::exception& e) {
-            if (outputResult)
-            {
-                logger.error("Plugin <{}> throws an std::exception in onPostInit", pluginFileName);
-                logger.error("Exception: ", e.what());
-                logger.error("Fail to init this plugin!");
-            }
+        {
+            logger.error("Fail to get the initialize point of the plugin {}!", pluginFileName);
             return false;
         }
-        catch (...) {
-            if (outputResult)
-            {
-                logger.error("Plugin <{}> throws an exception in onPostInit", pluginFileName);
-                logger.error("Fail to init this plugin!");
-            }
-            return false;
+
+        //Hot Load
+        if (isHotLoad)
+        {
+            callEventAtHotLoad(getPlugin(lib)->name);
         }
+        return true;
     }
-    else if (outputResult)
+    catch (const std::exception& e)
     {
-        logger.error("Fail to get the initialize point of the plugin {}!", pluginFileName);
+        if (outputResult)
+        {
+            logger.error("Error occurred when loading plugin {}!", pluginFilePath);
+            logger.error(TextEncoding::toUTF8(e.what()));
+        }
         return false;
     }
-
-    //Hot Load
-    if (isHotLoad)
+    catch (...)
     {
-        callEventAtHotLoad(getPlugin(lib)->name);
+        if (outputResult)
+        {
+            logger.error("Error occurred when loading plugin {}!", pluginFilePath);
+        }
+        return false;
     }
-    return true;
 }
 
 bool LL::PluginManager::unloadPlugin(string pluginName, bool outputResult)
 {
-    if (pluginName.find(LLSE_COMMAND_FINISHED_SYMBOL) != string::npos)            //ScriptPlugin & Finished
-        return true;
-
-    LL::Plugin* plugin = getPlugin(pluginName);
-    if (!plugin)
+    // if (!LL::isDebugMode())
+    //     return false;
+    try
     {
-        if (outputResult)
-            logger.error("No match plugin found!");
-        return false;
-    }
-
-    if (plugin->type == Plugin::PluginType::ScriptPlugin)        //Script Plugin
-    {
-        if (pluginName.find(LLSE_COMMAND_FINISHED_SYMBOL) == string::npos && outputResult)       //not finished
+        LL::Plugin* plugin = getPlugin(pluginName);
+        if (!plugin)
         {
-            logger.error("Fail to unload script plugin {}!", pluginName);
+            if (outputResult)
+                logger.error("No match plugin found!");
             return false;
         }
-        else
-            return true;
+
+        if (plugin->type == Plugin::PluginType::ScriptPlugin)        //Script Plugin
+        {
+            Event::ScriptPluginManagerEvent ev;
+            ev.operation = Event::ScriptPluginManagerEvent::Operation::Unload;
+            ev.target = pluginName;
+            ev.pluginExtention = filesystem::path(str2wstr(plugin->filePath)).extension().u8string();
+            ev.call();
+
+            return ev.success;
+        }
+
+        //Hot unload
+        //callEventAtHotUnload(pluginName);
+        //unRegisterPlugin(pluginName);
+        //removeAllEventListeners(pluginName);
+
+        logger.warn("Unload function of dll plugins has not been finished.");                    //TODO
+        return false;
     }
-
-    //Hot unload
-    //callEventAtHotUnload(pluginName);
-    //unRegisterPlugin(pluginName);
-    //removeAllEventListeners(pluginName);
-
-    logger.warn("Unload function of dll plugins has not been finished.");                    //TODO
-    return false;
+    catch (const std::exception& e)
+    {
+        if (outputResult)
+        {
+            logger.error("Error occurred when unloading plugin {}!", pluginName);
+            logger.error(TextEncoding::toUTF8(e.what()));
+        }
+        return false;
+    }
+    catch (...)
+    {
+        if (outputResult)
+        {
+            logger.error("Error occurred when unloading plugin {}!", pluginName);
+        }
+        return false;
+    }
 }
 
 bool LL::PluginManager::reloadPlugin(string pluginName, bool outputResult)
 {
-    if (pluginName.find(LLSE_COMMAND_FINISHED_SYMBOL) != string::npos)            //ScriptPlugin & Finished
-        return true;
+    // if (!LL::isDebugMode())
+    //     return false;
+    try
+    {
+        LL::Plugin* plugin = getPlugin(pluginName);
+        if (!plugin)
+        {
+            if (outputResult)
+                logger.error("No match plugin found!");
+            return false;
+        }
 
-    LL::Plugin* plugin = getPlugin(pluginName);
-    if (!plugin)
+        if (plugin->type == Plugin::PluginType::ScriptPlugin)        //Script Plugin
+        {
+            Event::ScriptPluginManagerEvent ev;
+            ev.operation = Event::ScriptPluginManagerEvent::Operation::Reload;
+            ev.target = pluginName;
+            ev.pluginExtention = filesystem::path(str2wstr(plugin->filePath)).extension().u8string();
+            ev.call();
+            return ev.success;
+        }
+
+        /*string path = plugin->filePath;
+        if (!unloadPlugin(pluginName))
+            return false;
+        return loadPlugin(path);*/
+
+        logger.warn("Reload function of dll plugins has not been finished.");                    //TODO
+        return false;
+    }
+    catch (const std::exception& e)
     {
         if (outputResult)
-            logger.error("No match plugin found!");
+        {
+            logger.error("Error occurred when reloading plugin {}!", pluginName);
+            logger.error(TextEncoding::toUTF8(e.what()));
+        }
         return false;
     }
-
-    /*string path = plugin->filePath;
-    if (!unloadPlugin(pluginName))
+    catch (...)
+    {
+        if (outputResult)
+        {
+            logger.error("Error occurred when reloading plugin {}!", pluginName);
+        }
         return false;
-    return loadPlugin(path);*/
-
-    logger.warn("Reload function of dll plugins has not been finished.");                    //TODO
-    return false;
+    }
 }
 
-bool LL::PluginManager::reloadAllPlugins(bool outputResult)
+int LL::PluginManager::reloadAllPlugins(bool outputResult)
 {
-    auto plugins = getAllPlugins(false);
-    bool res = false;
-    for (auto& [name, plugin] : plugins)
+    // if (!LL::isDebugMode())
+    //     return false;
+    try
     {
-        if (reloadPlugin(name))
-            res = true;
-        else
-            logger.error("Fail to reload plugin {}!", name);
+        auto plugins = getAllPlugins(true);
+        int cnt = 0;
+        for (auto& [name, plugin] : plugins)
+        {
+            if (plugin->type == Plugin::PluginType::ScriptPlugin)
+            {
+                Event::ScriptPluginManagerEvent ev;
+                ev.operation = Event::ScriptPluginManagerEvent::Operation::Reload;
+                ev.target = plugin->name;
+                ev.pluginExtention = filesystem::path(str2wstr(plugin->filePath)).extension().u8string();
+                ev.call();
+
+                if (ev.success)
+                    ++cnt;
+            }
+            else
+            {
+                if (reloadPlugin(name))
+                    ++cnt;
+                else
+                    logger.error("Fail to reload plugin {}!", name);
+            }
+        }
+        return cnt;
     }
-    return res;
+    catch (const std::exception& e)
+    {
+        if (outputResult)
+        {
+            logger.error("Error occurred when reloading all plugins!");
+            logger.error(TextEncoding::toUTF8(e.what()));
+        }
+        return false;
+    }
+    catch (...)
+    {
+        if (outputResult)
+        {
+            logger.error("Error occurred when reloading all plugins!");
+        }
+        return false;
+    }
 }
 
 bool LL::PluginManager::callEventAtHotLoad(std::string pluginName)
 {
+    // if (!LL::isDebugMode())
+    //     return false;
     Schedule::nextTick([pluginName]() {
         Event::ServerStartedEvent().callToPlugin(pluginName);       // ServerStartedEvent
     });
@@ -308,6 +427,8 @@ bool LL::PluginManager::callEventAtHotLoad(std::string pluginName)
 
 bool LL::PluginManager::callEventAtHotUnload(std::string pluginName)
 {
+    // if (!LL::isDebugMode())
+    //     return false;
     auto players = Level::getAllPlayers();
     for (auto& pl : players)                        // PlayerLeftEvent
     {
@@ -322,10 +443,10 @@ bool LL::PluginManager::callEventAtHotUnload(std::string pluginName)
 }
 
 //Helper
-LIAPI bool RegisterPlugin(HMODULE handler, std::string name, std::string introduction, LL::Version version,
+LIAPI bool RegisterPlugin(HMODULE handler, std::string name, std::string desc, LL::Version version,
     std::map<std::string, std::string> others)
 {
     others["PluginType"] = "DLL Plugin";
     others["PluginFilePath"] = handler ? GetModulePath(handler) : name;
-    return LL::PluginManager::registerPlugin(handler, name, introduction, version, others);
+    return LL::PluginManager::registerPlugin(handler, name, desc, version, others);
 }

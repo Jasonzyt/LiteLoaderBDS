@@ -2,6 +2,7 @@
 #pragma once
 #define AUTO_GENERATED
 #include "../Global.h"
+#include "Json.hpp"
 
 #define BEFORE_EXTRA
 // Include Headers or Declare Types Here
@@ -17,14 +18,15 @@ class IsSpawnableDescription {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ISSPAWNABLEDESCRIPTION
 public:
-    class IsSpawnableDescription& operator=(class IsSpawnableDescription const&) = delete;
-    IsSpawnableDescription(class IsSpawnableDescription const&) = delete;
+    class IsSpawnableDescription& operator=(class IsSpawnableDescription const &) = delete;
+    IsSpawnableDescription(class IsSpawnableDescription const &) = delete;
     IsSpawnableDescription() = delete;
 #endif
 
 public:
     /*0*/ virtual ~IsSpawnableDescription();
-    /*1*/ virtual char const* getJsonName() const;
+    /*1*/ virtual char const * getJsonName() const;
+    MCAPI void parse(class Json::Value const &);
 
 protected:
 

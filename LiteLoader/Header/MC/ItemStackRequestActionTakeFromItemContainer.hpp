@@ -16,9 +16,8 @@ class ItemStackRequestActionTakeFromItemContainer : public ItemStackRequestActio
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ITEMSTACKREQUESTACTIONTAKEFROMITEMCONTAINER
 public:
-    class ItemStackRequestActionTakeFromItemContainer& operator=(class ItemStackRequestActionTakeFromItemContainer const&) = delete;
-    ItemStackRequestActionTakeFromItemContainer(class ItemStackRequestActionTakeFromItemContainer const&) = delete;
-    ItemStackRequestActionTakeFromItemContainer() = delete;
+    class ItemStackRequestActionTakeFromItemContainer& operator=(class ItemStackRequestActionTakeFromItemContainer const &) = delete;
+    ItemStackRequestActionTakeFromItemContainer(class ItemStackRequestActionTakeFromItemContainer const &) = delete;
 #endif
 
 public:
@@ -26,6 +25,7 @@ public:
     /*1*/ virtual void __unk_vfn_1();
     /*2*/ virtual void __unk_vfn_2();
     /*3*/ virtual void __unk_vfn_3();
+    MCAPI ItemStackRequestActionTakeFromItemContainer();
 
 protected:
 

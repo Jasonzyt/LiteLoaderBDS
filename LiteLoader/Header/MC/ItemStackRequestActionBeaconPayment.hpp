@@ -17,9 +17,8 @@ class ItemStackRequestActionBeaconPayment {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ITEMSTACKREQUESTACTIONBEACONPAYMENT
 public:
-    class ItemStackRequestActionBeaconPayment& operator=(class ItemStackRequestActionBeaconPayment const&) = delete;
-    ItemStackRequestActionBeaconPayment(class ItemStackRequestActionBeaconPayment const&) = delete;
-    ItemStackRequestActionBeaconPayment() = delete;
+    class ItemStackRequestActionBeaconPayment& operator=(class ItemStackRequestActionBeaconPayment const &) = delete;
+    ItemStackRequestActionBeaconPayment(class ItemStackRequestActionBeaconPayment const &) = delete;
 #endif
 
 public:
@@ -27,8 +26,11 @@ public:
     /*1*/ virtual void __unk_vfn_1();
     /*2*/ virtual void __unk_vfn_2();
     /*3*/ virtual void __unk_vfn_3();
-    /*4*/ virtual void _write(class BinaryStream&) const;
-    /*5*/ virtual bool _read(class ReadOnlyBinaryStream&);
+    /*4*/ virtual void _write(class BinaryStream &) const;
+    /*5*/ virtual bool _read(class ReadOnlyBinaryStream &);
+    MCAPI ItemStackRequestActionBeaconPayment();
+    MCAPI int getPrimaryEffectId() const;
+    MCAPI int getSecondaryEffectId() const;
 
 protected:
 

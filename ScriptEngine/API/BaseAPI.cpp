@@ -7,6 +7,9 @@
 #include "McAPI.h"
 #include <cmath>
 
+///////////////////// Enum //////////////////////
+ClassDefine<void> DamageCauseEnumBuilder = EnumDefineBuilder<ActorDamageCause>::build("DamageCause");
+
 //////////////////// Class Definition ////////////////////
 
 ClassDefine<IntPos> IntPosBuilder =
@@ -17,6 +20,9 @@ ClassDefine<IntPos> IntPosBuilder =
         .instanceProperty("z", &IntPos::getZ, &IntPos::setZ)
         .instanceProperty("dim", &IntPos::getDim)
         .instanceProperty("dimid", &IntPos::getDimId, &IntPos::setDimId)
+        .instanceProperty("dimid", &IntPos::getDimId, &IntPos::setDimId)
+
+        .instanceFunction("toString", &IntPos::toString)
         .build();
 
 ClassDefine<FloatPos> FloatPosBuilder =
@@ -27,6 +33,8 @@ ClassDefine<FloatPos> FloatPosBuilder =
         .instanceProperty("z", &FloatPos::getZ, &FloatPos::setZ)
         .instanceProperty("dim", &FloatPos::getDim)
         .instanceProperty("dimid", &FloatPos::getDimId, &FloatPos::setDimId)
+
+        .instanceFunction("toString", &FloatPos::toString)
         .build();
 
 ClassDefine<DirectionAngle> DirectionAngleBuilder =
@@ -35,6 +43,9 @@ ClassDefine<DirectionAngle> DirectionAngleBuilder =
         .instanceProperty("pitch", &DirectionAngle::getPitch, &DirectionAngle::setPitch)
         .instanceProperty("yaw", &DirectionAngle::getYaw, &DirectionAngle::setYaw)
         .instanceFunction("toFacing", &DirectionAngle::toFacing)
+
+        .instanceFunction("toString", &DirectionAngle::toString)
+
         .build();
         
 
@@ -95,6 +106,15 @@ IntPos* IntPos::extractPos(Local<Value> v)
 Local<Value> IntPos::getDim()
 {
     return String::newString(DimId2Name(dim));
+}
+
+Local<Value> IntPos::toString()
+{
+    try
+    {
+        return String::newString(fmt::format("{}({}, {}, {})", DimId2Name(dim), x, y, z));
+    }
+    CATCH("Fail in toString!");
 }
 
 //////////////////// FloatPos ////////////////////
@@ -162,6 +182,15 @@ Local<Value> FloatPos::getDim()
     return String::newString(name);
 }
 
+Local<Value> FloatPos::toString()
+{
+    try
+    {
+        return String::newString(fmt::format("{}({}, {}, {})", DimId2Name(dim), x, y, z));
+    }
+    CATCH("Fail in toString!");
+}
+
 //////////////////// DirectionAngle ////////////////////
 
 DirectionAngle* DirectionAngle::create(const Arguments& args)
@@ -179,6 +208,15 @@ DirectionAngle* DirectionAngle::create(const Arguments& args)
     {
         return nullptr;
     }
+}
+
+Local<Value> DirectionAngle::toString()
+{
+    try
+    {
+        return String::newString(fmt::format("({}, {})", pitch, yaw));
+    }
+    CATCH("Fail in toString");
 }
 
 Local<Value> DirectionAngle::toFacing()
@@ -246,4 +284,13 @@ Local<Value> McClass::getBDSVersion(const Arguments& args)
         return String::newString(LL::getBdsVersion());
     }
     CATCH("Fail in GetBDSVersion!")
+}
+
+Local<Value> McClass::getServerProtocolVersion(const Arguments& args)
+{
+    try
+    {
+        return Number::newNumber(LL::getServerProtocolVersion());
+    }
+    CATCH("Fail in GetServerProtocolVersion!")
 }

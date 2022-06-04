@@ -17,14 +17,15 @@ class BackgroundTaskQueue {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_BACKGROUNDTASKQUEUE
 public:
-    class BackgroundTaskQueue& operator=(class BackgroundTaskQueue const&) = delete;
-    BackgroundTaskQueue(class BackgroundTaskQueue const&) = delete;
+    class BackgroundTaskQueue& operator=(class BackgroundTaskQueue const &) = delete;
+    BackgroundTaskQueue(class BackgroundTaskQueue const &) = delete;
 #endif
 
 public:
     MCAPI BackgroundTaskQueue();
     MCAPI void flush();
     MCAPI unsigned __int64 getApproximateTaskCount() const;
+    MCAPI int getNextItemPriority();
     MCAPI void queue(class std::shared_ptr<class BackgroundTaskBase>, bool);
     MCAPI void resortPriorityQueue();
     MCAPI class std::shared_ptr<class BackgroundTaskBase> tryPop(int);

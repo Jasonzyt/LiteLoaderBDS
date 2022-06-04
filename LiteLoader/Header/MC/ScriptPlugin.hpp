@@ -17,14 +17,14 @@ class ScriptPlugin {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_SCRIPTPLUGIN
 public:
-    class ScriptPlugin& operator=(class ScriptPlugin const&) = delete;
-    ScriptPlugin(class ScriptPlugin const&) = delete;
+    class ScriptPlugin& operator=(class ScriptPlugin const &) = delete;
+    ScriptPlugin(class ScriptPlugin const &) = delete;
     ScriptPlugin() = delete;
 #endif
 
 public:
     /*0*/ virtual ~ScriptPlugin();
-    /*1*/ virtual class std::optional<std::string > onLoadScript(std::string const&);
+    /*1*/ virtual class std::optional<std::string> onLoadScript(std::string const &);
     /*
     inline  ~ScriptPlugin(){
          (ScriptPlugin::*rv)();
@@ -32,13 +32,21 @@ public:
         return (this->*rv)();
     }
     */
-    MCAPI ScriptPlugin(class ScriptPlugin&&);
+    MCAPI ScriptPlugin(class ScriptPlugin &&);
+    MCAPI ScriptPlugin(struct Scripting::ModuleDescriptor &&, std::vector<struct Scripting::ModuleDescriptor> &&, std::string const &, std::string const &, std::string const &, class std::unordered_map<std::string, std::string, struct std::hash<std::string>, struct std::equal_to<std::string>, class std::allocator<struct std::pair<std::string const, std::string>>> &&);
+    MCAPI std::string const & getEngineVersion() const;
+    MCAPI std::vector<struct Scripting::ModuleDescriptor> const & getModuleDependencies() const;
+    MCAPI struct Scripting::ModuleDescriptor const & getModuleDescriptor() const;
+    MCAPI std::string const & getRuntimeName() const;
+    MCAPI std::string const & getScriptMainName() const;
     MCAPI bool hasErrors() const;
+    MCAPI class std::optional<std::string> loadScriptMain();
     MCAPI std::vector<std::string> reportErrors() const;
+    MCAPI void setScriptContext(class Scripting::ScriptContext &&);
 
 protected:
 
 private:
-    MCAPI class std::optional<std::string > _loadScript(std::string const&);
+    MCAPI class std::optional<std::string> _loadScript(std::string const &);
 
 };

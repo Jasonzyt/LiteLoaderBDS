@@ -20,8 +20,8 @@ enum Type;
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ABILITY
 public:
-    class Ability& operator=(class Ability const&) = delete;
-    Ability(class Ability const&) = delete;
+    class Ability& operator=(class Ability const &) = delete;
+    Ability(class Ability const &) = delete;
     Ability() = delete;
 #endif
 
@@ -29,6 +29,7 @@ public:
     MCAPI bool getBool() const;
     MCAPI float getFloat() const;
     MCAPI enum Ability::Type getType() const;
+    MCAPI bool hasOption(enum Ability::Options) const;
     MCAPI void setBool(bool);
 
 protected:

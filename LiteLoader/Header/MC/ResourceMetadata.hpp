@@ -15,12 +15,12 @@ class ResourceMetadata {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_RESOURCEMETADATA
 public:
-    class ResourceMetadata& operator=(class ResourceMetadata const&) = delete;
-    ResourceMetadata(class ResourceMetadata const&) = delete;
+    class ResourceMetadata& operator=(class ResourceMetadata const &) = delete;
+    ResourceMetadata(class ResourceMetadata const &) = delete;
+    ResourceMetadata() = delete;
 #endif
 
 public:
-    MCAPI ResourceMetadata();
     MCAPI ~ResourceMetadata();
 
 protected:

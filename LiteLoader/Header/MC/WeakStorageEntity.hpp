@@ -17,18 +17,19 @@ class WeakStorageEntity {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_WEAKSTORAGEENTITY
 public:
-    class WeakStorageEntity& operator=(class WeakStorageEntity const&) = delete;
-    WeakStorageEntity(class WeakStorageEntity const&) = delete;
+    class WeakStorageEntity& operator=(class WeakStorageEntity const &) = delete;
+    WeakStorageEntity(class WeakStorageEntity const &) = delete;
     WeakStorageEntity() = delete;
 #endif
 
 public:
-    MCAPI bool operator==(class WeakStorageEntity const&) const;
+    MCAPI bool operator==(class WeakStorageEntity const &) const;
 
 protected:
-    MCAPI WeakStorageEntity(class StackResultStorageEntity const&);
-    MCAPI WeakStorageEntity(class OwnerStorageEntity const&);
+    MCAPI WeakStorageEntity(class StackResultStorageEntity const &);
+    MCAPI WeakStorageEntity(class OwnerStorageEntity const &);
     MCAPI WeakStorageEntity(enum WeakStorageEntity::EmptyInit);
+    MCAPI WeakStorageEntity(enum WeakStorageEntity::VariadicInit, class EntityContext const &);
     MCAPI bool _isSet() const;
     MCAPI void _reset();
 

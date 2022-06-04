@@ -5,26 +5,19 @@
 
 #define BEFORE_EXTRA
 // Include Headers or Declare Types Here
-
-enum CommandPermissionLevel : char {
+#include "CommandRegistry.hpp"
+#include "CommandParameterData.hpp"
+#include "CommandFlag.hpp"
+class CommandRegistry;
+//class CommandRegistry::Symbol;
+enum CommandPermissionLevel : char
+{
     Any = 0,
     GameMasters = 1,
     Admin = 2,
     HostPlayer = 3,
     Console = 4,
     Internal = 5,
-};
-
-enum class CommandFlagValue : char {
-    None = 0,
-    Usage = 1,
-    Visibility2 = 2,
-    Visibility4 = 4,
-    Visibility6 = 6,
-    Sync = 8,
-    Execute = 16,
-    Type = 32,
-    Cheat = 64,
 };
 
 enum class OriginType : char {
@@ -35,27 +28,17 @@ enum class OriginType : char {
     Test = 4,
     AutomationPlayer = 5,
     ClientAutomation = 6,
-    DedicatedServer = 7,
+    Server = 7,
     Actor = 8,
     Virtual = 9,
     GameArgument = 10,
     ActorServer = 11,
+    Precompiled = 12,
+    GameDirectorEntity = 13,
+    Script = 14,
     ExecuteContext = 15,
-};
 
-struct CommandFlag {
-    CommandFlagValue value;
-
-    constexpr bool operator==(CommandFlag const& rhs) const noexcept {
-        return value == rhs.value;
-    }
-    constexpr bool operator!=(CommandFlag const& rhs) const noexcept {
-        return value != rhs.value;
-    }
-    CommandFlag& operator|=(CommandFlag const& rhs) {
-        value = (CommandFlagValue)((char)rhs.value | (char)value);
-        return *this;
-    }
+    DedicatedServer = 7,//Server
 };
 
 class CommandOutput;
@@ -68,11 +51,11 @@ class Command {
 // Add Member There
 
 protected:
-    int unk8;          // 8
-    void* unk16;       // 16
-    int unk24;         // 24
-    unsigned char b28; // 28
-    CommandFlag flag;  // 30
+    int version;                       // 8
+    CommandRegistry* registry;         // 16
+    CommandRegistry::Symbol symbol;    // 24, 
+    CommandPermissionLevel permission; // 28
+    CommandFlag flag;                  // 30
 
 public:
     template <typename T>
@@ -90,13 +73,13 @@ public:
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COMMAND
 public:
-    class Command& operator=(class Command const&) = delete;
-    Command(class Command const&) = delete;
+    class Command& operator=(class Command const &) = delete;
+    Command(class Command const &) = delete;
 #endif
 
 public:
     /*0*/ virtual ~Command();
-    /*1*/ virtual void execute(class CommandOrigin const&, class CommandOutput&) const = 0;
+    /*1*/ virtual void execute(class CommandOrigin const &, class CommandOutput &) const = 0;
     /*
     inline  ~Command(){
          (Command::*rv)();
@@ -107,19 +90,19 @@ public:
     MCAPI Command();
     MCAPI std::string getCommandName() const;
     MCAPI bool hasFlag(struct CommandFlag) const;
-    MCAPI void run(class CommandOrigin const&, class CommandOutput&) const;
+    MCAPI void run(class CommandOrigin const &, class CommandOutput &) const;
     MCAPI static std::string const WILDCARD_TOKEN;
-    MCAPI static bool validRange(int, int, int, class CommandOutput&);
-    MCAPI static bool validRange(float, float, float, class CommandOutput&);
+    MCAPI static bool validRange(int, int, int, class CommandOutput &);
+    MCAPI static bool validRange(float, float, float, class CommandOutput &);
 
 protected:
-    MCAPI class CommandRegistry const& getRegistry() const;
-    MCAPI void sendTelemetry(class CommandOrigin const&, class CommandOutput&) const;
-    MCAPI bool shouldSendTelemetry(class CommandOrigin const&) const;
-    MCAPI static class Player* getPlayerFromOrigin(class CommandOrigin const&);
-    MCAPI static bool isTemplateLockedAction(class CommandOrigin const&);
-    MCAPI static bool isWildcard(class CommandSelectorBase const&);
-    MCAPI static bool validData(int, unsigned short&, class CommandOutput&);
+    MCAPI class CommandRegistry const & getRegistry() const;
+    MCAPI void sendTelemetry(class CommandOrigin const &, class CommandOutput &) const;
+    MCAPI bool shouldSendTelemetry(class CommandOrigin const &) const;
+    MCAPI static class Player * getPlayerFromOrigin(class CommandOrigin const &);
+    MCAPI static bool isTemplateLockedAction(class CommandOrigin const &);
+    MCAPI static bool isWildcard(class CommandSelectorBase const &);
+    MCAPI static bool validData(int, unsigned short &, class CommandOutput &);
 
 private:
 

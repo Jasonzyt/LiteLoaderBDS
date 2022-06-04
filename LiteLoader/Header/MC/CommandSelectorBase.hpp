@@ -6,9 +6,11 @@
 #define BEFORE_EXTRA
 // Include Headers or Declare Types Here
 #include "ActorDefinitionIdentifier.hpp"
+#include "CommandPosition.hpp"
 #include <functional>
 class CommandOrigin;
 class Actor;
+class Player;
 
 #undef BEFORE_EXTRA
 
@@ -40,34 +42,52 @@ char unk192;
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COMMANDSELECTORBASE
 public:
-    class CommandSelectorBase& operator=(class CommandSelectorBase const&) = delete;
-    CommandSelectorBase(class CommandSelectorBase const&) = delete;
+    class CommandSelectorBase& operator=(class CommandSelectorBase const &) = delete;
+    CommandSelectorBase(class CommandSelectorBase const &) = delete;
     CommandSelectorBase() = delete;
 #endif
 
 public:
-    MCAPI void addFilter(class std::function<bool (class CommandOrigin const& , class Actor const& )>);
-    MCAPI bool compile(class CommandOrigin const&, std::string&);
+    MCAPI void addFamilyFilter(struct InvertableFilter<std::string> const &);
+    MCAPI void addFilter(class std::function<bool (class CommandOrigin const &, class Actor const &)>);
+    MCAPI void addGameModeFilter(struct InvertableFilter<enum GameType> const &);
+    MCAPI void addHasItemFilter(std::string const &, int, class CommandIntegerRange const &, enum EquipmentSlot, class CommandIntegerRange const &);
+    MCAPI void addLevelFilter(struct std::pair<int, int> const &);
+    MCAPI void addNameFilter(struct InvertableFilter<std::string> const &);
+    MCAPI void addScoreFilter(std::string const &, class CommandIntegerRange const &, class std::function<int (bool &, std::string const &, class Actor const &)>);
+    MCAPI void addTagFilter(struct InvertableFilter<std::string> const &);
+    MCAPI void addTypeFilter(struct InvertableFilter<std::string> const &);
+    MCAPI void addXRotationFilter(struct std::pair<float, float> const &);
+    MCAPI void addYRotationFilter(struct std::pair<float, float> const &);
+    MCAPI bool compile(class CommandOrigin const &, std::string &);
     MCAPI std::string getName() const;
+    MCAPI enum CommandSelectionOrder getOrder() const;
     MCAPI bool hasName() const;
     MCAPI bool isExplicitIdSelector() const;
+    MCAPI void setBox(class BlockPos);
+    MCAPI void setExcludeAgents(bool);
+    MCAPI void setExplicitIdSelector(std::string const &);
     MCAPI void setIncludeDeadPlayers(bool);
+    MCAPI void setOrder(enum CommandSelectionOrder);
+    MCAPI void setPosition(class CommandPosition const &);
+    MCAPI void setRadiusMax(float);
+    MCAPI void setRadiusMin(float);
+    MCAPI void setResultCount(unsigned __int64, bool);
     MCAPI void setType(enum CommandSelectionType);
     MCAPI void setVersion(int);
     MCAPI ~CommandSelectorBase();
 
 protected:
     MCAPI CommandSelectorBase(bool);
-    MCAPI class std::shared_ptr<std::vector<class Actor* > > newResults(class CommandOrigin const&) const;
+    MCAPI class std::shared_ptr<std::vector<class Actor *>> newResults(class CommandOrigin const &) const;
 
 private:
-    MCAPI bool compareName(std::string const&) const;
-    MCAPI bool filter(class CommandOrigin const&, class Actor&) const;
-    MCAPI bool isExpansionAllowed(class CommandOrigin const&) const;
-    MCAPI bool isInDimension(class CommandOrigin const&, class Actor&) const;
-    MCAPI bool matchFamily(class Actor const&) const;
-    MCAPI bool matchName(class Actor const&) const;
-    MCAPI bool matchTag(class Actor const&) const;
-    MCAPI bool matchType(class Actor const&) const;
+    MCAPI bool compareName(std::string const &) const;
+    MCAPI bool filter(class CommandOrigin const &, class Actor &) const;
+    MCAPI bool isExpansionAllowed(class CommandOrigin const &) const;
+    MCAPI bool matchFamily(class Actor const &) const;
+    MCAPI bool matchName(class Actor const &) const;
+    MCAPI bool matchTag(class Actor const &) const;
+    MCAPI bool matchType(class Actor const &) const;
 
 };

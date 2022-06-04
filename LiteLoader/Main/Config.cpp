@@ -38,11 +38,23 @@ namespace LL {
                         {"autoInstallPath", conf.addonsInstallPath}
                     }},
                     {"FixListenPort", {{"enabled", conf.enableFixListenPort}}},
-                    {"AntiGive", {{"enabled", conf.enableAntiGive}}},
-                    {"ErrorStackTraceback", {{"enabled", conf.enableErrorStackTraceback}}},
+                    {"AntiGive", {
+                        {"enabled", conf.enableAntiGive},
+                        {"command", conf.antiGiveCommand}
+                    }},
+                    {"ErrorStackTraceback", {
+                        {"enabled", conf.enableErrorStackTraceback},
+                        {"cacheSymbol", conf.cacheErrorStackTracebackSymbol}
+                    }},
                     {"UnoccupyPort19132", {{"enabled", conf.enableUnoccupyPort19132}}},
                     {"CheckRunningBDS", {{"enabled", conf.enableCheckRunningBDS}}},
-                    {"WelcomeText", {{"enabled", conf.enableWelcomeText}}}
+                    {"WelcomeText", {{"enabled", conf.enableWelcomeText}}},
+                    {"FixMcBug", {{"enabled", conf.enableFixMcBug}}},
+                    {"OutputFilter", {
+                        {"enabled", conf.enableOutputFilter},
+                        {"onlyFilterConsoleOutput", conf.onlyFilterConsoleOutput},
+                        {"filterRegex", conf.outputFilterRegex}
+                    }}
                 }
             }
         };
@@ -110,6 +122,7 @@ namespace LL {
             {
                 const nlohmann::json& setting = modules.at("AntiGive");
                 conf.enableAntiGive = setting.value("enabled", true);
+                conf.antiGiveCommand = setting.value("command", "kick {player}");
             }
             if (modules.count("UnoccupyPort19132"))
             {
@@ -126,9 +139,21 @@ namespace LL {
                 const nlohmann::json& setting = modules.at("WelcomeText");
                 conf.enableWelcomeText = setting.value("enabled", true);
             }
+            if (modules.count("FixMcBug"))
+            {
+                const nlohmann::json& setting = modules.at("FixMcBug");
+                conf.enableFixMcBug = setting.value("enabled", true);
+            }
             if (modules.find("ErrorStackTraceback") != modules.end()) {
                 const nlohmann::json& setting = modules.at("ErrorStackTraceback");
                 conf.enableErrorStackTraceback = setting.value("enabled", true);
+                conf.cacheErrorStackTracebackSymbol = setting.value("cacheSymbol", false);
+            }
+            if (modules.find("OutputFilter") != modules.end()) {
+                const nlohmann::json& setting = modules.at("OutputFilter");
+                conf.enableOutputFilter = setting.value("enabled", false);
+                conf.onlyFilterConsoleOutput = setting.value("onlyFilterConsoleOutput", true);
+                conf.outputFilterRegex = setting.value("filterRegex", std::vector<std::string>());
             }
         }
     }

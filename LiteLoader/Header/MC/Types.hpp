@@ -23,14 +23,45 @@ public:
     MCAPI static UUID fromString(std::string const&);
     MCAPI bool isEmpty() const;
     MCAPI static UUID seedFromString(std::string const&);
+    MCAPI static class mce::UUID EMPTY;
 
     inline operator bool() const
     {
         return !isEmpty();
     }
 };
+class Color
+{
+public:
+    float r;
+    float g;
+    float b;
+    float a;
+    Color(float r, float g, float b, float a = 1)
+        : r(r)
+        , g(g)
+        , b(b)
+        , a(a){};
 
-class Color;
+    inline operator bool() const
+    {
+        return !(*this == NIL);
+    }
+
+    LIAPI double distanceTo(mce::Color const dst) const;
+    LIAPI std::string toConsoleCode(bool foreground = true) const;
+    LIAPI std::string toNearestColorCode() const;
+    LIAPI static class mce::Color fromConsoleCode(std::string const&);
+    LIAPI static class mce::Color fromColorCode(std::string const&);
+
+    MCAPI static mce::Color const NIL;
+    MCAPI static class mce::Color fromHexString(std::string const&);
+    MCAPI bool operator==(class mce::Color const&) const;
+    MCAPI int toABGR(void) const;
+    MCAPI int toARGB(void) const;
+    MCAPI std::string toHexString(void) const;
+
+};
 
 }; // namespace mce
 
@@ -45,7 +76,10 @@ public:
         return {(bpos1.x + bpos2.x) / 2, (bpos1.y + bpos2.y) / 2, (bpos1.z + bpos2.z) / 2};
     }
 
+    // ignored with /clr
+#ifndef _M_CEE
     LIAPI AABB toAABB() const;
+#endif // !_M_CEE
 };
 
 template <typename A, typename T>
@@ -73,7 +107,11 @@ public:
 #include "ActorUniqueID.hpp"
 
 //static_assert(!std::is_pod_v<ActorUniqueID>);
-
+class NetherNet
+{
+public:
+    struct NetworkID;
+};
 
 class ActorRuntimeID
 {
@@ -204,12 +242,6 @@ struct PositionTrackingDB
     class TrackingRecord;
 };
 
-
-struct SubChunkBrightnessStorage
-{
-    struct LightPair;
-};
-
 struct BlockGeometry
 {
     struct Model;
@@ -262,6 +294,9 @@ class TypedClientNetId
 {
 public:
     T2 netId;
+
+    virtual void clientInit(TypedClientNetId<T, T2, unk>);
+    virtual void clientInit();
 };
 
 template <typename T, typename T2, int unk>
@@ -342,9 +377,10 @@ public:
     {
         return *get();
     }
-    //inline operator ->() {
-
-    //}
+    inline operator bool() const
+    {
+        return get() != nullptr;
+    }
 };
 
 template <typename T>
@@ -355,6 +391,17 @@ struct SharePtrRefTraits;
 
 template <typename T>
 class SubChunkStorage;
+
+enum class ScriptFacing
+{
+    Unknown = -1,
+    Down = 0,
+    Up = 1,
+    North = 2,
+    South = 3,
+    West = 4,
+    East = 5,
+};
 
 template <typename T, typename T2>
 class TagRegistry;
@@ -388,13 +435,13 @@ class buffer_span_mut;
 template <typename T>
 class optional_ref
 {
-    T** value;
+    T* value;
 
 public:
     inline T* get() const
     {
-        if (value && *value)
-            return *value;
+        if (*this)
+            return value;
         return nullptr;
     }
     //inline T* set(T const& val)
@@ -403,11 +450,15 @@ public:
     //}
     inline T& operator*() const
     {
-        return **value;
+        return *value;
     }
     inline T* operator->() const
     {
-        return *value;
+        return value;
+    }
+    inline operator bool() const
+    {
+        return value != nullptr;
     }
 };
 
@@ -436,8 +487,13 @@ template <typename T1>
 class WildcardCommandSelector;
 
 //enum
-enum class ContainerType : char
+class CodeBuilder
 {
+public:
+    enum ProtocolVersion;
+};
+
+enum class ContainerType : char {
     INVENTORY              = -1,
     NONE                   = -9,
     CONTAINER              = 0,
@@ -721,16 +777,17 @@ enum class ItemStackRequestActionType: char
 
 enum class ActorDamageCause : int
 {
-    Override = 0x0,
-    Contact = 0x1,
-    EntityAttack = 0x2,
-    Projectile = 0x3,
-    Suffocation = 0x4,
-    Fall = 0x5,
-    Fire = 0x6,
-    FireTick = 0x7,
-    Lava = 0x8,
-    Drowning = 0x9,
+    None = -0x01,
+    Override = 0x00,
+    Contact = 0x01,
+    EntityAttack = 0x02,
+    Projectile = 0x03,
+    Suffocation = 0x04,
+    Fall = 0x05,
+    Fire = 0x06,
+    FireTick = 0x07,
+    Lava = 0x08,
+    Drowning = 0x09,
     BlockExplosion = 0x0A,
     EntityExplosion = 0x0B,
     Void = 0x0C,
@@ -748,8 +805,10 @@ enum class ActorDamageCause : int
     Lightning = 0x18,
     Charging = 0x19,
     Temperature = 0x1A,
+    Freezing = 0x1B,
+    Stalactite = 0x1C,
+    Stalagmite = 0x1D,
     All = 0x1F,
-    None = -0x01,
 };
 
 enum class ObjectiveSortOrder : char
@@ -765,6 +824,18 @@ enum class PlayerScoreSetFunction : char
     Remove = 2
 };
 
+enum class ContainerID : uint8_t
+{
+    Invalid = 0xff,
+    Inventory = 0,
+    First = 1,
+    Last = 100,
+    Offhand = 119,
+    Armor = 120,
+    SelectionSlots = 122,
+    PlayerUIOnly = 124
+};
+
 enum class FaceID : char
 {
     Unknown = -1,
@@ -778,170 +849,183 @@ enum class FaceID : char
 
 enum class MinecraftPacketIds : int
 {
-    Login = 0x1,
-    PlayStatus = 0x2,
-    ServerToClientHandshake = 0x3,
-    ClientToServerHandshake = 0x4,
-    Disconnect = 0x5,
-    ResourcePacksInfo = 0x6,
-    ResourcePackStack = 0x7,
-    ResourcePackClientResponse = 0x8,
-    Text = 0x9,
-    SetTime = 0xa,
-    StartGame = 0xb,
-    AddPlayer = 0xc,
-    AddActor = 0xd,
-    RemoveActor = 0xe,
-    AddItemActor = 0xf,
-    TakeItemActor = 0x11,
-    MoveActorAbsolute = 0x12,
-    MovePlayer = 0x13,
-    UpdateBlock = 0x15,
-    AddPainting = 0x16,
-    TickSync = 0x17,
-    BlockEvent = 0x1a,
-    ActorEvent = 0x1b,
-    MobEffect = 0x1c,
-    UpdateAttributes = 0x1d,
-    InventoryTransaction = 0x1e,
-    MobEquipment = 0x1f,
-    MobArmorEquipment = 0x20,
-    Interact = 0x21,
-    BlockPickRequest = 0x22,
-    ActorPickRequest = 0x23,
-    PlayerAction = 0x24,
-    HurtArmor = 0x26,
-    SetActorData = 0x27,
-    SetActorLink = 0x29,
-    SetHealth = 0x2a,
-    SetSpawnPosition = 0x2b,
-    Animate = 0x2c,
-    Respawn = 0x2d,
-    ContainerOpen = 0x2e,
-    ContainerClose = 0x2f,
-    PlayerHotbar = 0x30,
-    InventoryContent = 0x31,
-    InventorySlot = 0x32,
-    ContainerSetData = 0x33,
-    CraftingData = 0x34,
-    CraftingEvent = 0x35,
-    GuiDataPickItem = 0x36,
-    AdventureSettings = 0x37,
-    BlockActorData = 0x38,
-    PlayerInput = 0x39,
-    LevelChunk = 0x3a,
-    SetCommandsEnabled = 0x3b,
-    SetDifficulty = 0x3c,
-    ChangeDimension = 0x3d,
-    SetPlayerGameType = 0x3e,
-    PlayerList = 0x3f,
-    Event = 0x41,
-    SpawnExperienceOrb = 0x42,
-    ClientboundMapItemData = 0x43,
-    MapInfoRequest = 0x44,
-    ItemFrameDropItem = 0x47,
-    GameRulesChanged = 0x48,
-    Camera = 0x49,
-    BossEvent = 0x4a,
-    ShowCredits = 0x4b,
-    AvailableCommands = 0x4c,
-    CommandRequest = 0x4d,
-    CommandBlockUpdate = 0x4e,
-    CommandOutput = 0x4f,
-    UpdateTrade = 0x50,
-    UpdateEquip = 0x51,
-    ResourcePackDataInfo = 0x52,
-    ResourcePackChunkData = 0x53,
-    ResourcePackChunkRequest = 0x54,
-    Transfer = 0x55,
-    PlaySound = 0x56,
-    StopSound = 0x57,
-    SetTitle = 0x58,
-    AddBehaviorTree = 0x59,
-    StructureBlockUpdate = 0x5a,
-    ShowStoreOffer = 0x5b,
-    PurchaseReceipt = 0x5c,
-    PlayerSkin = 0x5d,
-    SubClientLogin = 0x5e,
-    AutomationClientConnect = 0x5f,
-    SetLastHurtBy = 0x60,
-    BookEdit = 0x61,
-    NpcRequest = 0x62,
-    PhotoTransfer = 0x63,
-    ModalFormRequest = 0x64,
-    ModalFormResponse = 0x65,
-    ServerSettingsRequest = 0x66,
-    ServerSettingsResponse = 0x67,
-    ShowProfile = 0x68,
-    SetDefaultGameType = 0x69,
-    RemoveObjective = 0x6a,
-    SetDisplayObjective = 0x6b,
-    SetScore = 0x6c,
-    LabTable = 0x6d,
-    UpdateBlockSynced = 0x6e,
-    MoveActorDelta = 0x6f,
-    SetScoreboardIdentity = 0x70,
-    SetLocalPlayerAsInitialized = 0x71,
-    UpdateSoftEnum = 0x72,
-    NetworkStackLatency = 0x73,
-    ScriptCustomEvent = 0x75,
-    SpawnParticleEffect = 0x76,
-    AvailableActorIdentifiers = 0x77,
-    NetworkChunkPublisherUpdate = 0x79,
-    BiomeDefinitionList = 0x7a,
-    LevelSoundEvent = 0x7b,
-    LevelEventGeneric = 0x7c,
-    LecternUpdate = 0x7d,
-    AddEntity = 0x7f,
-    ClientCacheStatus = 0x81,
-    OnScreenTextureAnimation = 0x82,
-    MapCreateLockedCopy = 0x83,
-    StructureTemplateDataRequest = 0x84,
-    StructureTemplateDataResponse = 0x85,
-    ClientCacheBlobStatus = 0x87,
-    ClientCacheMissResponse = 0x88,
-    EducationSettings = 0x89,
-    Emote = 0x8a,
-    MultiplayerSettings = 0x8b,
-    SettingsCommand = 0x8c,
-    AnvilDamage = 0x8d,
-    CompletedUsingItem = 0x8e,
-    NetworkSettings = 0x8f,
-    PlayerAuthInput = 0x90,
-    CreativeContent = 0x91,
-    PlayerEnchantOptions = 0x92,
-    ItemStackRequest = 0x93,
-    ItemStackResponse = 0x94,
-    PlayerArmorDamage = 0x95,
-    CodeBuilder = 0x96,
-    UpdatePlayerGameType = 0x97,
-    EmoteList = 0x98,
+    Login                             = 0x01,
+    PlayStatus                        = 0x02,
+    ServerToClientHandshake           = 0x03,
+    ClientToServerHandshake           = 0x04,
+    Disconnect                        = 0x05,
+    ResourcePacksInfo                 = 0x06,
+    ResourcePackStack                 = 0x07,
+    ResourcePackClientResponse        = 0x08,
+    Text                              = 0x09,
+    SetTime                           = 0x0A,
+    StartGame                         = 0x0B,
+    AddPlayer                         = 0x0C,
+    AddActor                          = 0x0D,
+    RemoveActor                       = 0x0E,
+    AddItemActor                      = 0x0F,
+    TakeItemActor                     = 0x11,
+    MoveActorAbsolute                 = 0x12,
+    MovePlayer                        = 0x13,
+    PassengerJump                     = 0x14,
+    UpdateBlock                       = 0x15,
+    AddPainting                       = 0x16,
+    TickSync                          = 0x17,
+    LevelSoundEventV1                 = 0x18,
+    LevelEvent                        = 0x19,
+    BlockEvent                        = 0x1A,
+    ActorEvent                        = 0x1B,
+    MobEffect                         = 0x1C,
+    UpdateAttributes                  = 0x1D,
+    InventoryTransaction              = 0x1E,
+    MobEquipment                      = 0x1F,
+    MobArmorEquipment                 = 0x20,
+    Interact                          = 0x21,
+    BlockPickRequest                  = 0x22,
+    ActorPickRequest                  = 0x23,
+    PlayerAction                      = 0x24,
+    HurtArmor                         = 0x26,
+    SetActorData                      = 0x27,
+    SetActorMotion                    = 0x28,
+    SetActorLink                      = 0x29,
+    SetHealth                         = 0x2A,
+    SetSpawnPosition                  = 0x2B,
+    Animate                           = 0x2C,
+    Respawn                           = 0x2D,
+    ContainerOpen                     = 0x2E,
+    ContainerClose                    = 0x2F,
+    PlayerHotbar                      = 0x30,
+    InventoryContent                  = 0x31,
+    InventorySlot                     = 0x32,
+    ContainerSetData                  = 0x33,
+    CraftingData                      = 0x34,
+    CraftingEvent                     = 0x35,
+    GuiDataPickItem                   = 0x36,
+    AdventureSettings                 = 0x37,
+    BlockActorData                    = 0x38,
+    PlayerInput                       = 0x39,
+    LevelChunk                        = 0x3A,
+    SetCommandsEnabled                = 0x3B,
+    SetDifficulty                     = 0x3C,
+    ChangeDimension                   = 0x3D,
+    SetPlayerGameType                 = 0x3E,
+    PlayerList                        = 0x3F,
+    SimpleEvent                       = 0x40,
+    Event                             = 0x41,
+    SpawnExperienceOrb                = 0x42,
+    ClientboundMapItemData            = 0x43,
+    MapInfoRequest                    = 0x44,
+    RequestChunkRadius                = 0x45,
+    ChunkRadiusUpdated                = 0x46,
+    ItemFrameDropItem                 = 0x47,
+    GameRulesChanged                  = 0x48,
+    Camera                            = 0x49,
+    BossEvent                         = 0x4A,
+    ShowCredits                       = 0x4B,
+    AvailableCommands                 = 0x4C,
+    CommandRequest                    = 0x4D,
+    CommandBlockUpdate                = 0x4E,
+    CommandOutput                     = 0x4F,
+    UpdateTrade                       = 0x50,
+    UpdateEquip                       = 0x51,
+    ResourcePackDataInfo              = 0x52,
+    ResourcePackChunkData             = 0x53,
+    ResourcePackChunkRequest          = 0x54,
+    Transfer                          = 0x55,
+    PlaySound                         = 0x56,
+    StopSound                         = 0x57,
+    SetTitle                          = 0x58,
+    AddBehaviorTree                   = 0x59,
+    StructureBlockUpdate              = 0x5A,
+    ShowStoreOffer                    = 0x5B,
+    PurchaseReceipt                   = 0x5C,
+    PlayerSkin                        = 0x5D,
+    SubClientLogin                    = 0x5E,
+    AutomationClientConnect           = 0x5F,
+    SetLastHurtBy                     = 0x60,
+    BookEdit                          = 0x61,
+    NpcRequest                        = 0x62,
+    PhotoTransfer                     = 0x63,
+    ModalFormRequest                  = 0x64,
+    ModalFormResponse                 = 0x65,
+    ServerSettingsRequest             = 0x66,
+    ServerSettingsResponse            = 0x67,
+    ShowProfile                       = 0x68,
+    SetDefaultGameType                = 0x69,
+    RemoveObjective                   = 0x6A,
+    SetDisplayObjective               = 0x6B,
+    SetScore                          = 0x6C,
+    LabTable                          = 0x6D,
+    UpdateBlockSynced                 = 0x6E,
+    MoveActorDelta                    = 0x6F,
+    SetScoreboardIdentity             = 0x70,
+    SetLocalPlayerAsInitialized       = 0x71,
+    UpdateSoftEnum                    = 0x72,
+    NetworkStackLatency               = 0x73,
+    ScriptCustomEvent                 = 0x75,
+    SpawnParticleEffect               = 0x76,
+    AvailableActorIdentifiers         = 0x77,
+    LevelSoundEventV2                 = 0x78,
+    NetworkChunkPublisherUpdate       = 0x79,
+    BiomeDefinitionList               = 0x7A,
+    LevelSoundEvent                   = 0x7B,
+    LevelEventGeneric                 = 0x7C,
+    LecternUpdate                     = 0x7D,
+    AddEntity                         = 0x7F,
+    RemoveEntity                      = 0x80,
+    ClientCacheStatus                 = 0x81,
+    OnScreenTextureAnimation          = 0x82,
+    MapCreateLockedCopy               = 0x83,
+    StructureTemplateDataRequest      = 0x84,
+    StructureTemplateDataResponse     = 0x85,
+    ClientCacheBlobStatus             = 0x87,
+    ClientCacheMissResponse           = 0x88,
+    EducationSettings                 = 0x89,
+    Emote                             = 0x8A,
+    MultiplayerSettings               = 0x8B,
+    SettingsCommand                   = 0x8C,
+    AnvilDamage                       = 0x8D,
+    CompletedUsingItem                = 0x8E,
+    NetworkSettings                   = 0x8F,
+    PlayerAuthInput                   = 0x90,
+    CreativeContent                   = 0x91,
+    PlayerEnchantOptions              = 0x92,
+    ItemStackRequest                  = 0x93,
+    ItemStackResponse                 = 0x94,
+    PlayerArmorDamage                 = 0x95,
+    CodeBuilder                       = 0x96,
+    UpdatePlayerGameType              = 0x97,
+    EmoteList                         = 0x98,
     PositionTrackingDBServerBroadcast = 0x99,
-    PositionTrackingDBClientRequest = 0x9a,
-    DebugInfo = 0x9b,
-    PacketViolationWarning = 0x9c,
-    MotionPredictionHints = 0x9d,
-    AnimateEntity = 0x9e,
-    CameraShake = 0x9f,
-    PlayerFog = 0xa0,
-    CorrectPlayerMovePrediction = 0xa1,
-    ItemComponent = 0xa2,
-    FilterText = 0xa3,
-    ClientboundDebugRenderer = 0xa4,
-    SyncActorProperty = 0xa5,
-    AddVolumeEntity = 0xa6,
-    RemoveVolumeEntity = 0xa7,
-    SimulationType = 0xa8,
-    NPCDialogue = 0xa9,
-    EduUriResource = 0xaa,
-    CreatePhoto = 0xab,
-    UpdateSubChunkBlocks = 0xac,
-    PhotoInfoRequest = 0xad,
-    SubChunk = 0xae,
-    SubChunkRequest = 0xaf,
-    PlayerStartItemCooldown = 0xb0,
-    ScriptMessage = 0xb1,
-    CodeBuilderSource = 0xb2,
+    PositionTrackingDBClientRequest   = 0x9A,
+    DebugInfo                         = 0x9B,
+    PacketViolationWarning            = 0x9C,
+    MotionPredictionHints             = 0x9D,
+    AnimateEntity                     = 0x9E,
+    CameraShake                       = 0x9F,
+    PlayerFog                         = 0xA0,
+    CorrectPlayerMovePrediction       = 0xA1,
+    ItemComponent                     = 0xA2,
+    FilterText                        = 0xA3,
+    ClientboundDebugRenderer          = 0xA4,
+    SyncActorProperty                 = 0xA5,
+    AddVolumeEntity                   = 0xA6,
+    RemoveVolumeEntity                = 0xA7,
+    SimulationType                    = 0xA8,
+    NpcDialogue                       = 0xA9,
+    EduUriResource                    = 0xAA,
+    CreatePhoto                       = 0xAB,
+    UpdateSubChunkBlocks              = 0xAC,
+    PhotoInfoRequest                  = 0xAD,//removed
+    SubChunk                          = 0xAE,
+    SubChunkRequest                   = 0xAF,
+    PlayerStartItemCooldown           = 0xB0,
+    ScriptMessage                     = 0xB1,
+    CodeBuilderSource                 = 0xB2,
+    TickingAreasLoadStatus            = 0xB3,
+    DimensionData                     = 0xB4,
+    AgentActionEvent                  = 0xB5,
+    ChangeMobProperty 		          = 0xB6
 };
 
 enum ItemStackNetResult :unsigned char {
@@ -1019,24 +1103,35 @@ enum ItemStackNetResult :unsigned char {
 //    int Min = 1, Max = 0x7FFFFFFF;
 //};
 
+enum class InventoryTransactionError
+{
+    Unknown = 0,
+    NoError = 1,
+    BalanceMismatch = 2,
+    SourceItemMismatch = 3,
+    InventoryMismatch = 4,
+    SizeMismatch = 5,
+    AuthorityMismatch = 6,
+    StateMismatch = 7,
+    ApiDenied = 8
+};
+
+enum class InventorySourceType
+{
+    Invalid = -1,
+    Container = 0,
+    Global = 1,
+    World = 2,
+    Creative = 3,
+    UntrackedInteractionUI = 100,
+    NONIMPLEMENTEDTODO = 99999
+};
+
 template <typename T>
 struct InvertableFilter
 {
     T value;
     bool inverted;
-};
-
-class CommandOutputParameter
-{
-    std::string str;
-    int type;
-
-public:
-    MCINLINE CommandOutputParameter(std::string str, int type)
-        : str(std::move(str))
-        , type(type)
-    {
-    }
 };
 
 template <typename T>

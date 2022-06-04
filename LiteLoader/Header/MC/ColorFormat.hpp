@@ -12,14 +12,37 @@ namespace ColorFormat {
 
 #define AFTER_EXTRA
 // Add Member There
+LIAPI extern std::unordered_map<std::string, const char*> const colorCodeToConsoleMap;
+LIAPI extern std::unordered_map<std::string, mce::Color const> const colorCodeToColorMap;
+
+
+LIAPI std::string nearestColorCodeFromColor(mce::Color const& color);
+LIAPI mce::Color ColorFromConsoleCode(std::string const& consoleCode);
+
+LIAPI std::string consoleCodeFromColorCode(std::string const& mcCode);
+LIAPI std::string nearestColorCodeFromConsoleCode(std::string const& consoleCode);
+
+LIAPI std::string& convertToMc(std::string& str);
+LIAPI std::string convertToMc(std::string&& str);
+
+LIAPI std::string& convertToColsole(std::string& str, bool keepColorCode = false);
+LIAPI std::string convertToColsole(std::string&& str, bool keepColorCode = false);
+
+LIAPI std::string& removeColorCode(std::string& str);
+LIAPI std::string removeColorCode(std::string&& str);
+
+[[deprecated("Use convertToMc instead")]]
+LIAPI std::string& transferConsoleColorToColorCode(std::string& str);
+[[deprecated("Use convertToColsole instead")]]
+LIAPI std::string& transferColorCodeToConsole(std::string& str, bool keepColorCode = false);
 
 #undef AFTER_EXTRA
     MCAPI extern std::string const AQUA;
     MCAPI extern std::string const BLACK;
     MCAPI extern std::string const BLUE;
     MCAPI extern std::string const BOLD;
-    MCAPI std::string ColorCodeFromColor(class mce::Color const&);
-    MCAPI class mce::Color const* ColorFromColorCode(std::string const&);
+    MCAPI std::string ColorCodeFromColor(class mce::Color const &);
+    MCAPI class mce::Color const * ColorFromColorCode(std::string const &);
     MCAPI extern std::string const DARK_AQUA;
     MCAPI extern std::string const DARK_BLUE;
     MCAPI extern std::string const DARK_GRAY;
@@ -27,7 +50,7 @@ namespace ColorFormat {
     MCAPI extern std::string const DARK_PURPLE;
     MCAPI extern std::string const DARK_RED;
     MCAPI extern std::string const ESCAPE;
-    MCAPI class gsl::basic_string_span<char const, -1> const FromString(std::string const&);
+    MCAPI class gsl::basic_string_span<char const, -1> const FromString(std::string const &);
     MCAPI extern std::string const GOLD;
     MCAPI extern std::string const GRAY;
     MCAPI extern std::string const GREEN;

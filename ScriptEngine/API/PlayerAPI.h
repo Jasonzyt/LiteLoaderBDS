@@ -1,6 +1,7 @@
 #pragma once
 #include "APIHelp.h"
 
+class SimulatedPlayer;
 
 //////////////////// Classes ////////////////////
 class Player;
@@ -16,6 +17,7 @@ public:
 
     void set(Player* player);
     Player* get();
+    SimulatedPlayer* asSimulatedPlayer();
 
     static Local<Object> newPlayer(Player *p);
     static Player* extract(Local<Value> v);
@@ -48,6 +50,7 @@ public:
     Local<Value> kick(const Arguments& args);
     Local<Value> tell(const Arguments& args);
     Local<Value> talkAs(const Arguments& args);
+    Local<Value> talkTo(const Arguments& args);
     Local<Value> rename(const Arguments& args);
     Local<Value> transServer(const Arguments& args);
     Local<Value> crash(const Arguments& args);
@@ -67,6 +70,7 @@ public:
     Local<Value> getArmor(const Arguments& args);
     Local<Value> getEnderChest(const Arguments& args);
     Local<Value> getRespawnPosition(const Arguments& args);
+    Local<Value> setRespawnPosition(const Arguments& args);
     Local<Value> refreshItems(const Arguments& args);
 
     Local<Value> getScore(const Arguments& args);
@@ -102,6 +106,28 @@ public:
     Local<Value> getAllTags(const Arguments& args);
     Local<Value> getAbilities(const Arguments& args);
     Local<Value> getAttributes(const Arguments& args);
+
+    Local<Value> isSimulatedPlayer(const Arguments& args);
+
+    // SimulatedPlayer API (API/SimulatedPlayerAPI.cpp)
+    
+    Local<Value> simulateAttack(const Arguments& args);
+    Local<Value> simulateDestory(const Arguments& args);
+    Local<Value> simulateDisconnect(const Arguments& args);
+    Local<Value> simulateInteract(const Arguments& args);
+    Local<Value> simulateJump(const Arguments& args);
+    Local<Value> simulateLocalMove(const Arguments& args);
+    Local<Value> simulateLookAt(const Arguments& args);
+    Local<Value> simulateSetBodyRotation(const Arguments& args);
+    Local<Value> simulateNavigateTo(const Arguments& args);
+    Local<Value> simulateUseItem(const Arguments& args);
+    Local<Value> simulateStopDestroyingBlock(const Arguments& args);
+    Local<Value> simulateStopInteracting(const Arguments& args);
+    Local<Value> simulateStopMoving(const Arguments& args);
+    Local<Value> simulateStopUsingItem(const Arguments& args);
+
+    // bool simulateSetItem(class ItemStack&, bool, int);
+    // bool simulateGiveItem(class ItemStack&, bool);
 
     //For Compatibility
     Local<Value> getIP();

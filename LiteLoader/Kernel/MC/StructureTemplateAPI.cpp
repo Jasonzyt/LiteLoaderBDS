@@ -6,20 +6,22 @@
 #include <MC/StructureTemplateData.hpp>
 
 StructureTemplate StructureTemplate::fromTag(std::string name, CompoundTag const& tag) {
-    auto st = StructureTemplate(name);
+    StructureTemplate st(name);
     //st.getName(name_span)
     st.getData()->load(tag);
     return st;
 }
 
-StructureTemplate::StructureTemplate(class StructureTemplate const& copy) {
+StructureTemplate::StructureTemplate(class StructureTemplate const& copy)
+    : StructureTemplate(copy.getName())
+{
     load(*copy.save());
 }
 
-bool StructureTemplate::load(CompoundTag const& tag)
-{
-    return getData()->load(tag);
-}
+//bool StructureTemplate::load(CompoundTag const& tag)
+//{
+//    return getData()->load(tag);
+//}
 
 std::unique_ptr<CompoundTag> StructureTemplate::toTag() {
     return save();

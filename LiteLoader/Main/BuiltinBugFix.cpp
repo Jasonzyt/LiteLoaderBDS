@@ -1,4 +1,4 @@
-#include <unordered_map>
+﻿#include <unordered_map>
 
 #include <Main/Config.h>
 #include <Main/LiteLoader.h>
@@ -15,10 +15,11 @@
 
 #include <MC/SharedConstants.hpp>
 #include <MC/PropertiesSettings.hpp>
+#include <MC/ServerPlayer.hpp>
+#include <LiteLoader/Header/ScheduleAPI.h>
 
 using namespace LL;
 
-bool ipInformationLogged = false;
 
 //Fix bug
 TInstanceHook(void, "?handle@ServerNetworkHandler@@UEAAXAEBVNetworkIdentifier@@AEBVDisconnectPacket@@@Z",
@@ -34,18 +35,25 @@ TInstanceHook(void, "?handle@ServerNetworkHandler@@UEAAXAEBVNetworkIdentifier@@A
 
 //Fix bug
 TClasslessInstanceHook(bool, "?_read@ClientCacheBlobStatusPacket@@EEAA?AW4StreamReadResult@@AEAVReadOnlyBinaryStream@@@Z",
-      ReadOnlyBinaryStream* a2)
+    ReadOnlyBinaryStream* a2)
 {
-    ReadOnlyBinaryStream pkt(a2->getData(), 0);
+    ReadOnlyBinaryStream pkt(a2->getData(), false);
     pkt.getUnsignedVarInt();
-    if (pkt.getUnsignedVarInt() >= 0xfff) return 0;
-    if (pkt.getUnsignedVarInt() >= 0xfff) return 0;
+    if (pkt.getUnsignedVarInt() >= 0xfff) return false;
+    if (pkt.getUnsignedVarInt() >= 0xfff) return false;
     return original(this, a2);
 }
 
 //Fix bug
-TClasslessInstanceHook(void*, "?_read@PurchaseReceiptPacket@@EEAA?AW4StreamReadResult@@AEAVReadOnlyBinaryStream@@@Z"
-    ,ReadOnlyBinaryStream* a2)
+TClasslessInstanceHook(void*, "?_read@PurchaseReceiptPacket@@EEAA?AW4StreamReadResult@@AEAVReadOnlyBinaryStream@@@Z",
+    ReadOnlyBinaryStream* a2)
+{
+    return (void*)1;
+}
+
+// Fix bug
+TClasslessInstanceHook(void*, "?_read@EduUriResourcePacket@@EEAA?AW4StreamReadResult@@AEAVReadOnlyBinaryStream@@@Z",
+    ReadOnlyBinaryStream* a2)
 {
     return (void*)1;
 }
@@ -53,18 +61,29 @@ TClasslessInstanceHook(void*, "?_read@PurchaseReceiptPacket@@EEAA?AW4StreamReadR
 // Fix the listening port twice
 TClasslessInstanceHook(__int64, "?LogIPSupport@RakPeerHelper@@AEAAXXZ")
 {
+    static bool isFirstLog = true;
     if (globalConfig.enableFixListenPort)
     {
-        if (!ipInformationLogged)
+        if (isFirstLog)
         {
-            ipInformationLogged = true;
-            return original(this);
+            isFirstLog = false;
+            original(this);
+            endTime = clock();
+            Logger("Server").info("Done (" + fmt::format("{:.1f}", (endTime - startTime) * 1.0 / 1000) + "s)! For help, type \"help\" or \"?\"");
+            return 1;
         }
         return 0;
     }
     else
-    {
-        return original(this);
+    {     
+        original(this);
+        if (!isFirstLog)
+        {
+            endTime = clock();
+            Logger("Server").info("Done (" + fmt::format("{:.1f}", (endTime - startTime) * 1.0 / 1000) + "s)! For help, type \"help\" or \"?\""); 
+        }
+        isFirstLog = false;
+        return 1;
     }
 }
 
@@ -72,32 +91,49 @@ TClasslessInstanceHook(__int64, "?LogIPSupport@RakPeerHelper@@AEAAXXZ")
 #include <MC/InventorySource.hpp>
 #include <MC/InventoryTransaction.hpp>
 #include <MC/InventoryAction.hpp>
+#include <MC/Level.hpp>
+#include <MC/ElementBlock.hpp>
 #include <MC/IContainerManager.hpp>
+#include <MC/ColorFormat.hpp>
+#include <magic_enum/magic_enum.hpp>
 
-TInstanceHook(void*, "?handle@ServerNetworkHandler@@UEAAXAEBVNetworkIdentifier@@AEBVInventoryTransactionPacket@@@Z",
+inline bool itemMayFromReducer(ItemStack const& item)
+{
+    return item.isNull() || (ElementBlock::isElement(item) && !item.hasUserData());
+}
+
+TInstanceHook(void, "?handle@ServerNetworkHandler@@UEAAXAEBVNetworkIdentifier@@AEBVInventoryTransactionPacket@@@Z",
               ServerNetworkHandler, NetworkIdentifier const& netid, InventoryTransactionPacket* pk)
 {
     if (globalConfig.enableAntiGive)
     {
         auto sp = (Player*)this->getServerPlayer(netid);
-        auto data = (InventoryTransaction*)(*((__int64*)pk + 10) + 16);
-        auto a = dAccess<std::unordered_map<InventorySource*, void*>, 0>(data);
+        auto& actions = pk->transaction->data.actions;
         bool abnormal = false;
-        for (auto& i : a)
-            if ((int)*(&i.first) == 99999)
+        bool mayFromReducer = true;
+        for (auto& action : actions)
+            if (action.first.type == InventorySourceType::NONIMPLEMENTEDTODO)
             {
-                auto icm = sp->getContainerManager().lock();
-                if (icm)
+                for (auto& a : action.second)
                 {
-                    auto id = VirtualCall<int>(icm.get(), 0x18);
-                    if ((int)id == 22) return original(this, netid, pk);
+                    auto fromDesc = ItemStack::fromDescriptor(a.fromDescriptor, *Global<Level>->getBlockPalette(), true);
+                    auto toDesc = ItemStack::fromDescriptor(a.fromDescriptor, *Global<Level>->getBlockPalette(), true);
+                    if (!itemMayFromReducer(fromDesc) || !itemMayFromReducer(toDesc) || !itemMayFromReducer(a.fromItem) || !itemMayFromReducer(a.toItem))
+                    {
+                        if (mayFromReducer)
+                            logger.warn << "Player(" << sp->getRealName() << ") item data error!" << Logger::endl;
+                        if (!toDesc.isNull())
+                            logger.warn("Item: {}", toDesc.toString());
+                        mayFromReducer = false;
+                    }
                 }
                 abnormal = true;
             }
         if (abnormal)
         {
-            logger.warn << "Player(" << sp->getRealName() << ") item data error!" << Logger::endl;
-            return nullptr;
+            string cmd = ReplaceStr(globalConfig.antiGiveCommand, "{player}", sp->getRealName());
+            Level::runcmd(cmd);
+            return;
         }
     }
     return original(this, netid, pk);
@@ -117,7 +153,7 @@ TInstanceHook(ItemActor*, "?_drop@Actor@@IEAAPEBVItemActor@@AEBVItemStack@@_N@Z"
     if (!dAccess<bool, 0x2c>(out))
     {
         auto num = dAccess<int, 0x20>(out);
-        if (num > 0 && num == 1)
+        if (num == 1)
         {
             auto v17 = *(Vec2*)((char*)out + 0x14);
             this->setRot(v17);
@@ -159,21 +195,64 @@ TInstanceHook(void, "?moveView@Player@@UEAAXXZ",
 #include <MC/ChunkViewSource.hpp>
 inline bool Interval(int a1)
 {
-    if (a1 < 0x5ffffff && a1 > -0x5ffffff) return 1;
-    return 0;
+    if (a1 < 0x5ffffff && a1 > -0x5ffffff) return true;
+    return false;
+}
+template <typename T>
+inline bool validPosition(T const& pos)
+{
+    if (isnan(static_cast<float>(pos.x)) || isnan(static_cast<float>(pos.z))) return false;
+    return Interval(static_cast<int>(pos.x)) && Interval(static_cast<int>(pos.y)) && Interval(static_cast<int>(pos.z));
 }
 TClasslessInstanceHook(__int64, "?move@ChunkViewSource@@QEAAXAEBVBlockPos@@H_NV?$function@$$A6AXV?$buffer_span_mut@V?$shared_ptr@VLevelChunk@@@std@@@@V?$buffer_span@I@@@Z@std@@@Z",
-    BlockPos& a1, int a2, bool a3, std::function<void(class buffer_span_mut<class std::shared_ptr<class LevelChunk>>, class buffer_span<unsigned int>)> a4)
+    BlockPos const& a1, int a2, bool a3, std::function<void(class buffer_span_mut<class std::shared_ptr<class LevelChunk>>, class buffer_span<unsigned int>)> a4)
 {
-    if (Interval(a1.x) && Interval(a1.y) && Interval(a1.z))
+    if (validPosition(a1))
         return original(this, a1, a2, a3, a4);
     Player* pl = movingViewPlayer;
     if (pl->isPlayer())
     {
         logger.warn << "Player(" << pl->getRealName() << ") sent invalid MoveView Packet!" << Logger::endl;
-        pl->setPos(pl->getPosOld());
+        auto& pos = pl->getPosPrev();
+        if (validPosition(pos))
+            pl->setPos(pl->getPosition());
+        else
+            pl->setPos(Global<Level>->getDefaultSpawn().bottomCenter());
     }
+    pl->kick("error move");
     return 0;
+}
+
+TInstanceHook(void, "?move@Player@@UEAAXAEBVVec3@@@Z", Player, Vec3 pos)
+{
+    if (validPosition(pos))
+        return original(this, pos);
+    logger.warn << "Player(" << this->getRealName() << ") sent invalid Move Packet!" << Logger::endl;
+    this->kick("error move");
+    return;
+}
+
+
+TInstanceHook(void, "?die@ServerPlayer@@UEAAXAEBVActorDamageSource@@@Z", ServerPlayer , ActorDamageSource* ds)
+{
+    original(this, ds);
+    if (LL::globalConfig.enableFixMcBug)
+    {
+        auto name = getRealName();
+        Schedule::delay([name]() {
+            auto pl = Global<Level>->getPlayer(name);
+            if (pl)
+                pl->kill();
+        },1);
+    }
+}
+
+//fix Fishing Hook changeDimension Crash
+TInstanceHook(__int64, "?changeDimension@Actor@@UEAAXV?$AutomaticID@VDimension@@H@@_N@Z", Actor, unsigned int a1, char a2)
+{
+    if (!LL::globalConfig.enableFixMcBug) return original(this, a1, a2);
+    if ((int)this->getEntityTypeId() == 0x4D) return 0;
+    return original(this, a1, a2);
 }
 
 //fix Wine Stop
@@ -188,3 +267,24 @@ TClasslessInstanceHook(void, "?leaveGameSync@ServerInstance@@QEAAXXZ")
         TerminateProcess(proc, 0);
     }
 }
+
+TClasslessInstanceHook(enum StartupResult, "?Startup@RakPeer@RakNet@@UEAA?AW4StartupResult@2@IPEAUSocketDescriptor@2@IH@Z",
+                       unsigned int maxConnections, class SocketDescriptor* socketDescriptors, unsigned socketDescriptorCount, int threadPriority)
+{
+    if (maxConnections > 0xFFFF)
+    {
+        maxConnections = 0xFFFF;
+    }
+    return original(this, maxConnections, socketDescriptors, socketDescriptorCount, threadPriority);
+}
+
+// Fix command crash when server is stopping
+TClasslessInstanceHook(void, "?fireEventPlayerMessage@MinecraftEventing@@AEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@000@Z",
+                       std::string const& a1, std::string const& a2, std::string const& a3, std::string const& a4)
+{
+    if (LL::isServerStopping())
+        return;
+    original(this, a1, a2, a3, a4);
+}
+
+

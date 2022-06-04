@@ -6,7 +6,6 @@ env:
   SOLUTION_FILE_PATH: .
   BUILD_CONFIGURATION: Release
   Platform: X64
-  ChakraCore_version: cc_windows_all_1_11_24
 
 jobs:
   build:
@@ -33,12 +32,22 @@ jobs:
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v1
+        
+      - name: Change LITELOADER_VERSION_STATUS_BETA
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        if: false == startsWith(github.ref, 'refs/tags/')
+        run: |
+          sed -r -i 's/#define\s+LITELOADER_VERSION_STATUS\s+LITELOADER_VERSION_\w+/#define LITELOADER_VERSION_STATUS   LITELOADER_VERSION_BETA/' LiteLoader/Main/Version.h
+          sed -r -i 's/#define\s+LITELOADER_VERSION_ACTIONS\s+.*/#define LITELOADER_VERSION_ACTIONS  ${{ github.run_number }}\r/' LiteLoader/Main/Version.h
+          cat LiteLoader/Main/Version.h
+        shell: bash
 
-      - name: Change LITELOADER_VERSION_STATUS
+      - name: Change LITELOADER_VERSION_STATUS_RELEASE
         working-directory: ${{env.GITHUB_WORKSPACE}}
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          sed -i 's/Beta/Release/g' LiteLoader/Main/Version.h
+          sed -r -i 's/#define\s+LITELOADER_VERSION_STATUS\s+LITELOADER_VERSION_\w+/#define LITELOADER_VERSION_STATUS   LITELOADER_VERSION_RELEASE/' LiteLoader/Main/Version.h
+          sed -r -i 's/#define\s+LITELOADER_VERSION_ACTIONS\s+.*/#define LITELOADER_VERSION_ACTIONS  ${{ github.run_number }}\r/' LiteLoader/Main/Version.h
         shell: bash
 
       - name: Build
@@ -56,12 +65,19 @@ jobs:
           ./PackRelease.cmd action
         shell: cmd
 
-      #      - name: Pack SDK
-      #        working-directory: ${{env.GITHUB_WORKSPACE}}
-      #        run: |
-      #          cd Scripts
-      #          ./PackSDK.cmd action
-      #        shell: cmd
+      - name: Move PDB to path
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: |
+          mkdir PDB
+          cp x64/Release/*.pdb PDB
+        shell: bash
+
+      - name: Pack PDB
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          7z a -tzip PDB.zip PDB
+        shell: bash
 
       - name: Update LiteLoaderSDK
         working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -79,13 +95,13 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: LiteLoader
-          path: ${{ github.workspace }}\RELEASE\
+          path: ${{ github.workspace }}\RELEASE
 
-      #      - name: Upload LiteLoader SDK
-      #        uses: actions/upload-artifact@v2
-      #        with:
-      #          name: LiteLoader-SDK
-      #          path: ${{ github.workspace }}\LiteLoader-SDK.zip
+      - name: Upload PDB
+        uses: actions/upload-artifact@v2
+        with:
+          name: PDB
+          path: ${{ github.workspace }}\PDB
 
       - name: Prepare for creating Release
         working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -103,6 +119,16 @@ jobs:
           body_path: ${{ github.workspace }}\CHANGELOG.txt
           files: |
             ${{ github.workspace }}\LiteLoader-${{ steps.rel.outputs.tag }}.zip
-            ${{ github.workspace }}\LiteLoader-SDK.zip
+            ${{ github.workspace }}\PDB.zip
         env:
           GITHUB_REPOSITORY: LiteLDev/LiteLoaderBDS
+
+      - name: Publish to MineBBS
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          curl -X POST https://api.github.com/repos/LiteLDev/AutoUpdate-MineBBS/dispatches \
+          -H "Accept: application/vnd.github.everest-preview+json" \
+          -H "Authorization: Bearer ${{ secrets.MB_TOKEN }}" \
+          --data '{"event_type": "webhook"}'
+        shell: bash

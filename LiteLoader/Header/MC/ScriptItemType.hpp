@@ -17,13 +17,14 @@ class ScriptItemType {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_SCRIPTITEMTYPE
 public:
-    class ScriptItemType& operator=(class ScriptItemType const&) = delete;
-    ScriptItemType(class ScriptItemType const&) = delete;
+    class ScriptItemType& operator=(class ScriptItemType const &) = delete;
+    ScriptItemType(class ScriptItemType const &) = delete;
     ScriptItemType() = delete;
 #endif
 
 public:
-    MCAPI class Item const& getItem() const;
+    MCAPI ScriptItemType(class Item const &);
+    MCAPI class Item const & getItem() const;
     MCAPI std::string getName() const;
 
 protected:

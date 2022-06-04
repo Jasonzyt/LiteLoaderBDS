@@ -17,21 +17,23 @@ class CreativeItemEntry {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_CREATIVEITEMENTRY
 public:
-    class CreativeItemEntry& operator=(class CreativeItemEntry const&) = delete;
-    CreativeItemEntry(class CreativeItemEntry const&) = delete;
+    class CreativeItemEntry& operator=(class CreativeItemEntry const &) = delete;
+    CreativeItemEntry(class CreativeItemEntry const &) = delete;
     CreativeItemEntry() = delete;
 #endif
 
 public:
     /*0*/ virtual ~CreativeItemEntry();
-    MCAPI class TypedServerNetId<struct CreativeItemNetIdTag, unsigned int, 0> const& getCreativeNetId() const;
-    MCAPI class CreativeGroupInfo* getGroup() const;
+    MCAPI CreativeItemEntry(class CreativeItemEntry &&);
+    MCAPI CreativeItemEntry(class CreativeItemRegistry *, class TypedServerNetId<struct CreativeItemNetIdTag, unsigned int, 0> const &, class ItemInstance const &, unsigned int);
+    MCAPI class TypedServerNetId<struct CreativeItemNetIdTag, unsigned int, 0> const & getCreativeNetId() const;
+    MCAPI class CreativeGroupInfo * getGroup() const;
     MCAPI unsigned int getIndex() const;
-    MCAPI class ItemInstance const& getItemInstance() const;
+    MCAPI class ItemInstance const & getItemInstance() const;
 
 protected:
 
 private:
-    MCAPI void _setGroup(class CreativeGroupInfo*);
+    MCAPI void _setGroup(class CreativeGroupInfo *);
 
 };

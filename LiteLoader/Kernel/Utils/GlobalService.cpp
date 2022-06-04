@@ -48,10 +48,10 @@ TInstanceHook(void, "?initCoreEnums@MinecraftCommands@@QEAAXAEBVIWorldRegistries
 }
 
 // LevelStorage & DBStorage
-TInstanceHook(DBStorage*, "??0DBStorage@@QEAA@UDBStorageConfig@@@Z",
-      DBStorage, struct DBStorageConfig* config)
+TInstanceHook(DBStorage*, "??0DBStorage@@QEAA@UDBStorageConfig@@V?$not_null@V?$NonOwnerPointer@VLevelDbEnv@@@Bedrock@@@gsl@@@Z",
+              DBStorage, struct DBStorageConfig* config, void* a3)
 {
-    auto ret = original(this, config);
+    auto ret = original(this, config,a3);
     Global<LevelStorage> = (LevelStorage*)this;
     Global<DBStorage> = this;
     return ret;
@@ -70,6 +70,7 @@ THook(void*, "??0ChunkSource@@QEAA@V?$unique_ptr@VChunkSource@@U?$default_delete
 // ?activate@RakNetServerLocator@@AEAAXXZ
 TInstanceHook(void*, "?_activate@RakNetServerLocator@@AEAAXXZ", RakNetServerLocator)
 {
+    constexpr auto h = do_hash("?_activate@RakNetServerLocator@@AEAAXXZ");
     static bool set = false;
     if (!set)
     {
@@ -90,8 +91,9 @@ TInstanceHook(void*, "??0RakPeer@RakNet@@QEAA@XZ", RakNet::RakPeer)
     return original(this);
 }
 // Scoreboard
+#include <MC/CommandSoftEnumRegistry.hpp>
 TInstanceHook(Scoreboard*, "??0ServerScoreboard@@QEAA@VCommandSoftEnumRegistry@@PEAVLevelStorage@@@Z",
-      Scoreboard, void* a2, void* a3)
+              Scoreboard, void** a2, class LevelStorage* a3)
 {
     Scoreboard* sc = original(this, a2, a3);
     Global<Scoreboard> = sc;

@@ -17,16 +17,17 @@ class CompassSpriteCalculator {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COMPASSSPRITECALCULATOR
 public:
-    class CompassSpriteCalculator& operator=(class CompassSpriteCalculator const&) = delete;
-    CompassSpriteCalculator(class CompassSpriteCalculator const&) = delete;
+    class CompassSpriteCalculator& operator=(class CompassSpriteCalculator const &) = delete;
+    CompassSpriteCalculator(class CompassSpriteCalculator const &) = delete;
     CompassSpriteCalculator() = delete;
 #endif
 
 public:
     MCAPI CompassSpriteCalculator(float, float);
     MCAPI int getFrame() const;
-    MCAPI int update(class Actor&, bool);
-    MCAPI int updateFromPosition(class BlockSource const*, float, float, float, bool, bool);
+    MCAPI int update(class Actor &, bool);
+    MCAPI int updateFromPosition(class BlockSource const *, class BlockPos const &, float, float, float, bool, bool, bool, bool);
+    MCAPI int updateFromPosition(class BlockSource const *, float, float, float, bool, bool);
 
 protected:
 

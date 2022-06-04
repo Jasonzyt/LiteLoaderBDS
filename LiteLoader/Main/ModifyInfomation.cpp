@@ -9,9 +9,9 @@ using namespace std;
 
 Logger serverLogger("Server");
 extern void CheckBetaVersion();
-    THook(std::string, "?getServerVersionString@Common@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@XZ")
+THook(std::string, "?getServerVersionString@Common@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@XZ")
 {
-        CheckBetaVersion();
+    CheckBetaVersion();
     return original() + "(ProtocolVersion " + to_string(LL::getServerProtocolVersion()) + ") with " + fmt::format(LL::globalConfig.colorLog ?fg(fmt::color::light_sky_blue) | fmt::emphasis::bold | fmt::emphasis::italic : fmt::text_style() , "LiteLoaderBDS " + LL::getLoaderVersion().toString(true));
 }
 
@@ -35,9 +35,6 @@ THook(void, "?PlatformBedrockLogOut@@YAXIPEBD@Z", int a1, const char* ts)
     input.erase(std::remove(input.begin(), input.end(), '\n'), input.end());
     switch (a1)
     {
-        case 8u:
-            serverLogger.warn << input << Logger::endl;
-            break;
         case 1u:
             serverLogger.debug << input << Logger::endl;
             break;
@@ -46,6 +43,12 @@ THook(void, "?PlatformBedrockLogOut@@YAXIPEBD@Z", int a1, const char* ts)
             break;
         case 4u:
             serverLogger.warn << input << Logger::endl;
+            break;
+        case 8u:
+            serverLogger.error << input << Logger::endl;
+            break;
+        default:
+            serverLogger.info << input << Logger::endl;
             break;
     }
 }
@@ -58,61 +61,73 @@ THook(void, "?_appendLogEntryMetadata@LogDetails@BedrockLog@@AEAAXAEAV?$basic_st
 }
 
 #include "LiteLoader.h"
+#include <MC/BedrockLog.hpp>
 THook(void, "?log@BedrockLog@@YAXW4LogCategory@1@V?$bitset@$02@std@@W4LogRule@1@W4LogAreaID@@IPEBDH4ZZ",
-      int a1, int a2, __int64 a3, int a4, int a5, __int64 a6, int a7, __int64 a8, ...)
+      enum BedrockLog::LogCategory a1, class std::bitset<3> a2, enum BedrockLog::LogRule a3, enum LogAreaID a4, unsigned int a5, char const* a6, int a7, char const* a8, ...)
 {
     va_list va;
     auto text = (char*)a8;
-    if (string(text).find("setting up server logging...") != string(text).npos)
+    if (string(text).find("setting up server logging...") != string(text).npos 
+        || string(text).find("Server started") != string(text).npos)
     {
         return;
     }
-    //std::cout << a7 << std::endl;
     va_start(va, a8);
-    if (a7 == 600) {
-        string text = "Done (" + fmt::format("{:.1f}", (endTime - startTime) * 1.0 / 1000) + "s)! For help, type \"help\" or \"?\"";
-        return SymCall("?log_va@BedrockLog@@YAXW4LogCategory@1@V?$bitset@$02@std@@W4LogRule@1@W4LogAreaID@@IPEBDH4PEAD@Z",
-                       void, unsigned int, unsigned int, int, int, unsigned int, __int64, __int64, __int64, __int64)(a1, a2, a3, a4, a5, a6, a7, (__int64)text.c_str(), (__int64)va);
-    }
-    return SymCall("?log_va@BedrockLog@@YAXW4LogCategory@1@V?$bitset@$02@std@@W4LogRule@1@W4LogAreaID@@IPEBDH4PEAD@Z",
-                   void, unsigned int, unsigned int, int, int, unsigned int, __int64, __int64, __int64, __int64)(a1, a2, a3, a4, a5, a6, a7, a8, (__int64)va);
+    return BedrockLog::log_va(a1, a2, a3, a4, a5, a6, a7, a8, va);
 }
 
-extern std::unordered_map<void*, string*> resultOfOrigin;
+#include <MC/ColorFormat.hpp>
+#include <MC/CommandOrigin.hpp>
+#include <MC/CommandOutput.hpp>
+extern std::unordered_map<CommandOrigin const*, string*> resultOfOrigin;
 TClasslessInstanceHook(void*, "?send@CommandOutputSender@@UEAAXAEBVCommandOrigin@@AEBVCommandOutput@@@Z",
-                       void* ori, void* out)
+                       class CommandOrigin const& origin, class CommandOutput const& output)
 {
-    auto it = resultOfOrigin.find(ori);
-    if (it == resultOfOrigin.end())
+    std::stringbuf tmpBuf;
+    auto oldBuf = std::cout.rdbuf();
+    std::cout.rdbuf(&tmpBuf);
+    auto rv = original(this, origin, output);
+    std::cout.rdbuf(oldBuf);
+    if (LL::isDebugMode() && LL::globalConfig.tickThreadId != std::this_thread::get_id())
     {
-        std::stringbuf sbuf;
-        auto oBuf = std::cout.rdbuf();
-        std::cout.rdbuf(&sbuf);
-        auto rv = original(this, ori, out);
-        std::cout.rdbuf(oBuf);
-        auto str = sbuf.str();
-        std::istringstream iss(str);
-        string line;
-        while (getline(iss, line))
-        {
-            size_t pos = 0;
-            // Remove '§x' in the output
-            while ((pos = line.find("§")) != string::npos)
-            {
-                line.erase(pos, 3);
-            }
-            serverLogger.info << line << Logger::endl;
-        }
-        return rv;
+        logger.warn("The thread executing the CommandOutputSender::send is not the \"MC_SERVER\" thread");
+        logger.warn("Output: {}", tmpBuf.str());
     }
-    std::stringbuf sbuf;
-    auto oBuf = std::cout.rdbuf();
-    std::cout.rdbuf(&sbuf);
-    auto rv = original(this, ori, out);
-    std::cout.rdbuf(oBuf);
-    it->second->assign(sbuf.str());
-    while (it->second->size() && (it->second->back() == '\n' || it->second->back() == '\r'))
-        it->second->pop_back();
-    resultOfOrigin.erase(it);
+
+    auto it = resultOfOrigin.find(&origin);
+    if (it != resultOfOrigin.end())
+    {
+        try
+        {
+            // May crash for incomprehensible reasons
+            it->second->assign(tmpBuf.str());
+            while (it->second->size() && (it->second->back() == '\n' || it->second->back() == '\r'))
+                it->second->pop_back();
+            it->second = nullptr;
+            resultOfOrigin.erase(it);
+            return rv;
+        }
+        catch (...)
+        {
+            if (LL::isDebugMode())
+            {
+                logger.warn("Output: {}", tmpBuf.str());
+                logger.warn("size of resultOfOrigin: {}", resultOfOrigin.size());
+            }
+#ifdef DEBUG
+            __debugbreak();
+#endif // DEBUG
+        }
+    }
+    auto& log = output.getSuccessCount() > 0 ? serverLogger.info : serverLogger.error;
+    std::istringstream iss(tmpBuf.str());
+    string line;
+    while (getline(iss, line))
+    {
+        if (LL::globalConfig.colorLog)
+            log << ColorFormat::convertToColsole(line, false) << Logger::endl;
+        else
+            log << ColorFormat::removeColorCode(line) << Logger::endl;
+    }
     return rv;
 }

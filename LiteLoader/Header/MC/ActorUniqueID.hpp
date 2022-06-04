@@ -38,13 +38,12 @@ struct ActorUniqueID {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ACTORUNIQUEID
 public:
-    struct ActorUniqueID& operator=(struct ActorUniqueID const&) = delete;
-    ActorUniqueID(struct ActorUniqueID const&) = delete;
+    struct ActorUniqueID& operator=(struct ActorUniqueID const &) = delete;
+    ActorUniqueID(struct ActorUniqueID const &) = delete;
     ActorUniqueID() = delete;
 #endif
 
 public:
-    MCAPI unsigned __int64 getHash() const;
 
 protected:
 

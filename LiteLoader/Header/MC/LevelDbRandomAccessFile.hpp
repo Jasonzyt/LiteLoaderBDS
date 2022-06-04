@@ -2,6 +2,7 @@
 #pragma once
 #define AUTO_GENERATED
 #include "../Global.h"
+#include "Core.hpp"
 
 #define BEFORE_EXTRA
 // Include Headers or Declare Types Here
@@ -17,14 +18,15 @@ class LevelDbRandomAccessFile {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_LEVELDBRANDOMACCESSFILE
 public:
-    class LevelDbRandomAccessFile& operator=(class LevelDbRandomAccessFile const&) = delete;
-    LevelDbRandomAccessFile(class LevelDbRandomAccessFile const&) = delete;
+    class LevelDbRandomAccessFile& operator=(class LevelDbRandomAccessFile const &) = delete;
+    LevelDbRandomAccessFile(class LevelDbRandomAccessFile const &) = delete;
     LevelDbRandomAccessFile() = delete;
 #endif
 
 public:
     /*0*/ virtual ~LevelDbRandomAccessFile();
-    /*1*/ virtual class leveldb::Status Read(unsigned __int64, unsigned __int64, class leveldb::Slice*, char*) const;
+    /*1*/ virtual class leveldb::Status Read(unsigned __int64, unsigned __int64, class leveldb::Slice *, char *) const;
+    MCAPI LevelDbRandomAccessFile(class Core::File &&);
 
 protected:
 

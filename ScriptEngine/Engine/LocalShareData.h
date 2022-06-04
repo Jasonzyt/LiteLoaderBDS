@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 #include <third-party/ThreadPool/ThreadPool.hpp>
-
+#include <mutex>
 
 
 //////////////////// Structs ////////////////////
@@ -47,6 +47,9 @@ struct LocalDataType
 
 	//控制台命令回调
 	std::map<std::string, CmdCallbackData, CmdCallbackMapCmp> consoleCmdCallbacks;
+
+	// 真指令回调
+	std::map<std::string, CmdCallbackData, CmdCallbackMapCmp> commandCallbacks;
 };
 
 
@@ -58,11 +61,10 @@ extern LocalDataType* localShareData;
 //命令延迟注册队列
 extern std::vector<RegCmdQueue> toRegCmdQueue;
 
-//本地引擎表
-extern std::vector<ScriptEngine*> currentModuleEngines;
-
 //线程池
 extern ThreadPool pool;
+
+extern std::mutex messageLoopLock;
 
 //////////////////// APIs ////////////////////
 

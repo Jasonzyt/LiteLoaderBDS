@@ -18,8 +18,8 @@ class IdleState : public PetSleepWithOwnerState {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_IDLESTATE
 public:
-    class IdleState& operator=(class IdleState const&) = delete;
-    IdleState(class IdleState const&) = delete;
+    class IdleState& operator=(class IdleState const &) = delete;
+    IdleState(class IdleState const &) = delete;
     IdleState() = delete;
 #endif
 
@@ -34,6 +34,7 @@ public:
         return (this->*rv)();
     }
     */
+    MCAPI static std::unique_ptr<class IdleState> create(class PetSleepWithOwnerGoal &);
 
 protected:
 

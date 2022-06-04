@@ -3,9 +3,11 @@
 ClassDefine<void> McClassBuilder =
 	defineClass("mc")
 		.function("getBDSVersion", &McClass::getBDSVersion)
-		.function("runcmd", &McClass::runcmd)
+        .function("getServerProtocolVersion", &McClass::getServerProtocolVersion)
+        .function("runcmd", &McClass::runcmd)
 		.function("runcmdEx", &McClass::runcmdEx)
 		.function("regPlayerCmd", &McClass::regPlayerCmd)
+		.function("newCommand", &McClass::newCommand)
 		.function("broadcast", &McClass::broadcast)
 		.function("listen", &McClass::listen)
 		.function("getPlayer", &McClass::getPlayer)
@@ -13,7 +15,9 @@ ClassDefine<void> McClassBuilder =
 		.function("getAllEntities", McClass::getAllEntities)
 		.function("newItem", &McClass::newItem)
 		.function("spawnMob", &McClass::spawnMob)
+        .function("cloneMob", &McClass::cloneMob)
 		.function("spawnItem", &McClass::spawnItem)
+        .function("spawnSimulatedPlayer", &McClass::spawnSimulatedPlayer)
 		.function("explode", &McClass::explode)
 		.function("getBlock", &McClass::getBlock)
 		.function("setBlock", &McClass::setBlock)
@@ -36,4 +40,5 @@ ClassDefine<void> McClassBuilder =
 		.function("getAllScoreObjective", &McClass::getAllScoreObjectives)
 		.function("getDisplayObjectives", &McClass::getDisplayObjective)
 		.function("crash", &McClass::crashBDS)
-		.build();
+        	.function("setMaxPlayers", &McClass::setMaxNumPlayers)
+        	.build();

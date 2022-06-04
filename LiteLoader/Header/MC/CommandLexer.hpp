@@ -17,13 +17,17 @@ class CommandLexer {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COMMANDLEXER
 public:
-    class CommandLexer& operator=(class CommandLexer const&) = delete;
-    CommandLexer(class CommandLexer const&) = delete;
+    class CommandLexer& operator=(class CommandLexer const &) = delete;
+    CommandLexer(class CommandLexer const &) = delete;
     CommandLexer() = delete;
 #endif
 
 public:
+    MCAPI CommandLexer(std::string const &);
+    MCAPI struct CommandLexer::Token const & next() const;
     MCAPI void step();
+    MCAPI static bool isDigit(char);
+    MCAPI static bool isFilePathCharacter(char);
 
 protected:
 

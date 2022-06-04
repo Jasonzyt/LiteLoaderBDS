@@ -1,45 +1,47 @@
-# LiteLoader ScriptEngine - LLSE帮助中心 
+# LiteLoader BDS - LL帮助中心 
 
-[![GitHub license](https://img.shields.io/github/license/LiteLDev/LiteLoader)](https://github.com/LiteLDev/LiteLoader/blob/main/LICENSE)
-[![Build](https://img.shields.io/badge/build-passing-brightgreen)](#)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/LiteLDev/LiteLoader?include_prereleases)
+[![status](https://img.shields.io/github/workflow/status/LiteLDev/LiteLoader/Build%20LiteLoader?style=for-the-badge)](https://github.com/LiteLDev/LiteLoader/actions)
+[
+![Latest Tag](https://img.shields.io/github/v/tag/LiteLDev/LiteLoader?label=LATEST%20TAG&style=for-the-badge)
+![GitHub Releases (by Asset)](https://img.shields.io/github/downloads/LiteLDev/LiteLoader/latest/total?style=for-the-badge)
+](https://github.com/LiteLDev/LiteLoader/releases/latest)
 
 ## 🎨 项目简介
-`LiteLoader`是一个基岩版官方服务端`Bedrock Dedicated Server`（以下简称**BDS**）插件框架，提供强大的跨语言脚本插件支持能力和稳定的开发API支持。
+`LiteLoaderBDS`是一个基岩版官方服务端`Bedrock Dedicated Server`（以下简称 **BDS**）插件框架，提供强大的跨语言脚本插件支持能力和稳定的开发API支持。
 
-👉[点击此处](https://lxl.litebds.com/#/?id=main)👈 查看对LLSE项目更详细的解释说明  
-
+👉[点击此处](https://github.com/LiteLDev/LiteLoaderBDS/blob/main/README_zh-cn.md)👈 查看对LL项目更详细的解释说明  
 <br>
 
 ## 🔨 加载器安装 与 使用指南
 
-这里介绍了如何为BDS服务端安装`LiteLoader`加载器，以及如何安装LLSE插件  
+这里介绍了如何为BDS服务端安装`LiteLoaderBDS`加载器，如何修改配置，以及如何安装 LL 插件  
 
-👉[点击此处](zh_CN/Usage/)👈 查看 LLSE安装和使用文档
-
+👉[点击此处](zh_CN/Usage/)👈 查看 `LiteLoaderBDS` 安装和使用文档
 <br>
 
-## 🎯 插件开发指南 与 API文档
-这里是`LLSE`插件开发必读的说明文档  
+## ❓常见问题
 
-👉[点击此处](zh_CN/Development/)👈 查看 LLSE插件开发文档 
+安装和使用 `LiteLoaderBDS` 过程中遇到问题？这里有一些常见问题的解决方法
 
+👉[点击此处](zh_CN/QA/)👈 查看常见问题与解决方法
 <br>
 
-## 🎬 参与LL(SE)项目开发
+## ⛳ C++ 插件 - 开发指南 与 API文档
 
-我们欢迎你对`LiteLoader`做出自己的贡献！  
+使用 `C++`, `Golang` 等编译型语言语言开发 LL 插件，拥有海量API，自由实现你的任意想法
 
-👉[点击此处](zh_CN/Maintance/)👈查看 LLSE项目维护与支持文档
-
+在做了(新建文件夹)
 <br>
 
-## 💡 开源地址
+## 🎯 脚本插件 - 开发指南 与 API文档
+使用 `JavaScript`, `Lua` 等脚本语言开发 LL 插件，容易上手，功能强大
 
-[点击此处](https://github.com/LiteLDev/LiteLoader) 前往LiteXLoader项目源码 开源地址
-
+👉[点击此处](zh_CN/Development/)👈 查看 脚本插件开发文档 
 <br>
 
-## 💕赞助作者💕
-项目已接入爱发电 [点击此处](https://afdian.net/@LiteXLoader?tab=home)   
-给我们不断继续下去的动力！  
+## 🎬 参与 LiteLoaderBDS 项目开发
+
+我们欢迎你对`LiteLoaderBDS`做出自己的贡献！  
+
+👉[点击此处](zh_CN/Maintenance/)👈查看 LL项目维护与支持文档
+<br>

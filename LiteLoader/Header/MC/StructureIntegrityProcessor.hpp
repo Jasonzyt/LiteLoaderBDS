@@ -17,12 +17,13 @@ class StructureIntegrityProcessor {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_STRUCTUREINTEGRITYPROCESSOR
 public:
-    class StructureIntegrityProcessor& operator=(class StructureIntegrityProcessor const&) = delete;
-    StructureIntegrityProcessor(class StructureIntegrityProcessor const&) = delete;
+    class StructureIntegrityProcessor& operator=(class StructureIntegrityProcessor const &) = delete;
+    StructureIntegrityProcessor(class StructureIntegrityProcessor const &) = delete;
     StructureIntegrityProcessor() = delete;
 #endif
 
 public:
+    MCAPI StructureIntegrityProcessor(float, unsigned int);
     MCAPI std::vector<bool> generateFlagsForIndices(int, int) const;
 
 protected:

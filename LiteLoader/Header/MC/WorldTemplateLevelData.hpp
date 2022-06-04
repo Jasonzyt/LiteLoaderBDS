@@ -17,18 +17,30 @@ class WorldTemplateLevelData {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_WORLDTEMPLATELEVELDATA
 public:
-    class WorldTemplateLevelData& operator=(class WorldTemplateLevelData const&) = delete;
-    WorldTemplateLevelData(class WorldTemplateLevelData const&) = delete;
+    class WorldTemplateLevelData& operator=(class WorldTemplateLevelData const &) = delete;
+    WorldTemplateLevelData(class WorldTemplateLevelData const &) = delete;
 #endif
 
 public:
     MCAPI WorldTemplateLevelData();
-    MCAPI class BaseGameVersion const& getBaseGameVersion() const;
+    MCAPI WorldTemplateLevelData(bool, bool, class BaseGameVersion const &, class BaseGameVersion const &);
+    MCAPI class BaseGameVersion const & getBaseGameVersion() const;
+    MCAPI class ContentIdentity const & getContentIdentity() const;
+    MCAPI void getTagData(class CompoundTag const &);
+    MCAPI struct PackIdVersion const & getWorldTemplateIdentity() const;
+    MCAPI bool isFromWorldTemplate() const;
+    MCAPI bool isWorldTemplateOptionLocked() const;
+    MCAPI void setBaseGameVersion(class BaseGameVersion const &);
+    MCAPI void setContentIdentity(class ContentIdentity const &);
+    MCAPI void setIsWorldTemplateOptionLocked(bool);
+    MCAPI void setMaxBaseGameVersion(class BaseGameVersion const &);
+    MCAPI void setTagData(class CompoundTag &) const;
+    MCAPI void setWorldTemplateIdentity(struct PackIdVersion const &);
     MCAPI ~WorldTemplateLevelData();
 
 protected:
-    MCAPI void _getTagData(class CompoundTag const&);
-    MCAPI void _setTagData(class CompoundTag&) const;
+    MCAPI void _getTagData(class CompoundTag const &);
+    MCAPI void _setTagData(class CompoundTag &) const;
 
 private:
 

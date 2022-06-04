@@ -16,9 +16,8 @@ class ItemStackRequestActionPlaceInItemContainer : public ItemStackRequestAction
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ITEMSTACKREQUESTACTIONPLACEINITEMCONTAINER
 public:
-    class ItemStackRequestActionPlaceInItemContainer& operator=(class ItemStackRequestActionPlaceInItemContainer const&) = delete;
-    ItemStackRequestActionPlaceInItemContainer(class ItemStackRequestActionPlaceInItemContainer const&) = delete;
-    ItemStackRequestActionPlaceInItemContainer() = delete;
+    class ItemStackRequestActionPlaceInItemContainer& operator=(class ItemStackRequestActionPlaceInItemContainer const &) = delete;
+    ItemStackRequestActionPlaceInItemContainer(class ItemStackRequestActionPlaceInItemContainer const &) = delete;
 #endif
 
 public:
@@ -26,6 +25,7 @@ public:
     /*1*/ virtual void __unk_vfn_1();
     /*2*/ virtual void __unk_vfn_2();
     /*3*/ virtual void __unk_vfn_3();
+    MCAPI ItemStackRequestActionPlaceInItemContainer();
 
 protected:
 

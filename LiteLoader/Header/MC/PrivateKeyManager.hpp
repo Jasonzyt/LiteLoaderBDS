@@ -18,8 +18,8 @@ class PrivateKeyManager {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_PRIVATEKEYMANAGER
 public:
-    class PrivateKeyManager& operator=(class PrivateKeyManager const&) = delete;
-    PrivateKeyManager(class PrivateKeyManager const&) = delete;
+    class PrivateKeyManager& operator=(class PrivateKeyManager const &) = delete;
+    PrivateKeyManager(class PrivateKeyManager const &) = delete;
     PrivateKeyManager() = delete;
 #endif
 
@@ -34,7 +34,8 @@ public:
     }
     */
     MCAPI PrivateKeyManager(enum Crypto::Asymmetric::System);
-    MCAPI std::string computeSecret(class KeyManager const&) const;
+    MCAPI std::string computeSecret(class KeyManager const &) const;
+    MCAPI std::string sign(std::string const &, enum Crypto::Hash::HashType) const;
 
 protected:
 

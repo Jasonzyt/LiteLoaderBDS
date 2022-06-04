@@ -15,12 +15,18 @@ class RopePoints {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ROPEPOINTS
 public:
-    class RopePoints& operator=(class RopePoints const&) = delete;
-    RopePoints(class RopePoints const&) = delete;
+    class RopePoints& operator=(class RopePoints const &) = delete;
+    RopePoints(class RopePoints const &) = delete;
     RopePoints() = delete;
 #endif
 
 public:
+    MCAPI void beginRope();
+    MCAPI void endRope();
+    MCAPI void freezeInterpolation();
+    MCAPI void pushBack(class Vec3 const &);
+    MCAPI void reserve(unsigned __int64);
+    MCAPI unsigned __int64 size() const;
     MCAPI ~RopePoints();
 
 protected:

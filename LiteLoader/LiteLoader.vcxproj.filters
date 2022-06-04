@@ -58,6 +58,30 @@
     <Filter Include="Main">
       <UniqueIdentifier>{573131eb-b7d5-464e-b1d7-d2a041d60f35}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\DB">
+      <UniqueIdentifier>{d47eee0a-ceaf-48ec-b747-856b3378b49a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\DB">
+      <UniqueIdentifier>{39f6d3f7-c1b7-4418-862e-85ed1198ff67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\DB\Impl">
+      <UniqueIdentifier>{d935bcb1-83d6-4fc5-bac1-104c98ac7b92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\DB\Impl\SQLite">
+      <UniqueIdentifier>{19c29bec-ff40-4c20-be8c-9fd752fe4477}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\DB\Impl">
+      <UniqueIdentifier>{a6b1e662-95cb-4d69-a4ec-c93bd8278adb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\DB\Impl\SQLite">
+      <UniqueIdentifier>{5661b9a4-01e6-445e-8565-b34f504cd4e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\DB\Impl\MySQL">
+      <UniqueIdentifier>{0d856a82-dfc2-456d-9c8c-220ee36bca2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\DB\Impl\MySQL">
+      <UniqueIdentifier>{2ddb5319-2d2b-4a85-8d4e-1beb3d3d7023}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Kernel\Utils\CsLock.cpp">
@@ -80,9 +104,6 @@
     </ClCompile>
     <ClCompile Include="Kernel\Utils\FileHelper.cpp">
       <Filter>Kernel\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Kernel\TranslationAPI.cpp">
-      <Filter>Kernel</Filter>
     </ClCompile>
     <ClCompile Include="Kernel\KVDBAPI.cpp">
       <Filter>Kernel</Filter>
@@ -180,7 +201,7 @@
     <ClCompile Include="Kernel\Network\ReadOnlyBinaryStreamAPI.cpp">
       <Filter>Kernel\Network</Filter>
     </ClCompile>
-    <ClCompile Include="Kernel\Network\BinaryStream.cpp">
+    <ClCompile Include="Kernel\Network\BinaryStreamAPI.cpp">
       <Filter>Kernel\Network</Filter>
     </ClCompile>
     <ClCompile Include="Kernel\Scoreboard\ScoreboardAPI.cpp">
@@ -303,6 +324,63 @@
     <ClCompile Include="Kernel\Compatibility.cpp">
       <Filter>Kernel</Filter>
     </ClCompile>
+    <ClCompile Include="Kernel\MC\ColorFormatAPI.cpp">
+      <Filter>Kernel\MC</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\NBT\PrettySnbtFormatAPI.cpp">
+      <Filter>Kernel\NBT</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\Command\DynamicCommandAPI.cpp">
+      <Filter>Kernel\Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\I18nAPI_LL.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\Network\PacketAPI.cpp">
+      <Filter>Kernel\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\Utils\SRWLock.cpp">
+      <Filter>Kernel\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\RemoteCallAPI.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Row.cpp">
+      <Filter>Kernel\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Any.cpp">
+      <Filter>Kernel\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\RowSet.cpp">
+      <Filter>Kernel\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\ConnParams.cpp">
+      <Filter>Kernel\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Session.cpp">
+      <Filter>Kernel\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Impl\SQLite\Stmt.cpp">
+      <Filter>Kernel\DB\Impl\SQLite</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Impl\SQLite\Session.cpp">
+      <Filter>Kernel\DB\Impl\SQLite</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Stmt.cpp">
+      <Filter>Kernel\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Impl\MySQL\Session.cpp">
+      <Filter>Kernel\DB\Impl\MySQL</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\DB\Impl\MySQL\Stmt.cpp">
+      <Filter>Kernel\DB\Impl\MySQL</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\Utils\StringReader.cpp">
+      <Filter>Kernel\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Kernel\Utils\ShellLinkFile.cpp">
+      <Filter>Kernel\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\HookAPI.h">
@@ -341,7 +419,7 @@
     <ClInclude Include="Header\Utils\FileHelper.h">
       <Filter>Header\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Header\TranslationAPI.h">
+    <ClInclude Include="Header\I18nAPI.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Header\KVDBAPI.h">
@@ -527,9 +605,6 @@
     <ClInclude Include="Header\MC\ShortTag.hpp">
       <Filter>Header\NBT</Filter>
     </ClInclude>
-    <ClInclude Include="Header\RegCommandAPI.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="Header\MC\BlockInstance.hpp">
       <Filter>Header\MC</Filter>
     </ClInclude>
@@ -641,15 +716,81 @@
     <ClInclude Include="Header\MC\ItemStackBase.hpp">
       <Filter>Header\MC</Filter>
     </ClInclude>
+    <ClInclude Include="Header\MC\ColorFormat.hpp">
+      <Filter>Header\MC</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\MC\PrettySnbtFormat.hpp">
+      <Filter>Header\NBT</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DynamicCommandAPI.h">
+      <Filter>Header\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\TranslationAPI.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\MC\CommandPositionFloat.hpp">
+      <Filter>Header\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\MC\CommandFlag.hpp">
+      <Filter>Header\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\RegCommandAPI.h">
+      <Filter>Header\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\Utils\SRWLock.h">
+      <Filter>Header\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\RemoteCallAPI.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\RowSet.h">
+      <Filter>Header\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Session.h">
+      <Filter>Header\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Any.h">
+      <Filter>Header\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Row.h">
+      <Filter>Header\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\ConnParams.h">
+      <Filter>Header\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Impl\SQLite\Stmt.h">
+      <Filter>Header\DB\Impl\SQLite</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Impl\SQLite\Session.h">
+      <Filter>Header\DB\Impl\SQLite</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Types.h">
+      <Filter>Header\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Stmt.h">
+      <Filter>Header\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Impl\MySQL\Session.h">
+      <Filter>Header\DB\Impl\MySQL</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Impl\MySQL\Stmt.h">
+      <Filter>Header\DB\Impl\MySQL</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DB\Pointer.h">
+      <Filter>Header\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\Utils\StringReader.h">
+      <Filter>Header\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\Utils\ShellLinkFile.h">
+      <Filter>Header\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="Lib\third-party\openssl\libcrypto.lib">
       <Filter>Lib</Filter>
     </Library>
     <Library Include="Lib\third-party\openssl\libssl.lib">
-      <Filter>Lib</Filter>
-    </Library>
-    <Library Include="Header\third-party\cpp-base64\lib\cpp-base64.lib">
       <Filter>Lib</Filter>
     </Library>
     <Library Include="Lib\third-party\SQLiteCpp\SQLiteCpp.lib">
@@ -668,6 +809,24 @@
       <Filter>Lib</Filter>
     </Library>
     <Library Include="Lib\third-party\dbghelp\dbghelp.lib">
+      <Filter>Lib</Filter>
+    </Library>
+    <Library Include="Lib\third-party\compact_enc_det\ced.lib">
+      <Filter>Lib</Filter>
+    </Library>
+    <Library Include="Lib\third-party\dyncall\dyncall_s.lib">
+      <Filter>Lib</Filter>
+    </Library>
+    <Library Include="Lib\third-party\dyncall\dyncallback_s.lib">
+      <Filter>Lib</Filter>
+    </Library>
+    <Library Include="Lib\third-party\dyncall\dynload_s.lib">
+      <Filter>Lib</Filter>
+    </Library>
+    <Library Include="Lib\third-party\cpp-base64\cpp-base64.lib">
+      <Filter>Lib</Filter>
+    </Library>
+    <Library Include="Lib\third-party\mysql\mysqlclient.lib">
       <Filter>Lib</Filter>
     </Library>
   </ItemGroup>

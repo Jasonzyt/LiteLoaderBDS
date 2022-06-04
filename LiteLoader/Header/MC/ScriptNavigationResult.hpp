@@ -13,15 +13,15 @@ struct ScriptNavigationResult {
 #define AFTER_EXTRA
 // Add Member There
 public:
-    bool mResult;
+    bool mIsFullPath;
     std::vector<BlockPos> mPath;
 
 #undef AFTER_EXTRA
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_SCRIPTNAVIGATIONRESULT
 public:
-    struct ScriptNavigationResult& operator=(struct ScriptNavigationResult const&) = delete;
-    ScriptNavigationResult(struct ScriptNavigationResult const&) = delete;
+    struct ScriptNavigationResult& operator=(struct ScriptNavigationResult const &) = delete;
+    ScriptNavigationResult(struct ScriptNavigationResult const &) = delete;
     ScriptNavigationResult() = delete;
 #endif
 

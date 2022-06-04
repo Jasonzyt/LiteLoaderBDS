@@ -17,8 +17,8 @@ class RecordItemComponent {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_RECORDITEMCOMPONENT
 public:
-    class RecordItemComponent& operator=(class RecordItemComponent const&) = delete;
-    RecordItemComponent(class RecordItemComponent const&) = delete;
+    class RecordItemComponent& operator=(class RecordItemComponent const &) = delete;
+    RecordItemComponent(class RecordItemComponent const &) = delete;
     RecordItemComponent() = delete;
 #endif
 
@@ -29,7 +29,7 @@ public:
     /*3*/ virtual void __unk_vfn_3();
     /*4*/ virtual void __unk_vfn_4();
     /*5*/ virtual std::unique_ptr<class CompoundTag> buildNetworkTag() const;
-    /*6*/ virtual void initializeFromNetwork(class CompoundTag const&);
+    /*6*/ virtual void initializeFromNetwork(class CompoundTag const &);
     /*
     inline bool isNetworkComponent() const{
         bool (RecordItemComponent::*rv)() const;
@@ -37,11 +37,13 @@ public:
         return (this->*rv)();
     }
     */
+    MCAPI RecordItemComponent(class ComponentItem *);
     MCAPI std::string getAlias() const;
     MCAPI int getComparatorSignal() const;
     MCAPI float getDuration() const;
     MCAPI enum LevelSoundEvent getSound() const;
-    MCAPI static class HashedString const& getIdentifier();
+    MCAPI static void bindType();
+    MCAPI static class HashedString const & getIdentifier();
 
 protected:
 

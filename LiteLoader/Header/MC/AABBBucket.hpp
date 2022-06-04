@@ -17,13 +17,18 @@ struct AABBBucket {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_AABBBUCKET
 public:
-    struct AABBBucket& operator=(struct AABBBucket const&) = delete;
-    AABBBucket(struct AABBBucket const&) = delete;
-    AABBBucket() = delete;
+    struct AABBBucket& operator=(struct AABBBucket const &) = delete;
+    AABBBucket(struct AABBBucket const &) = delete;
 #endif
 
 public:
+    MCAPI AABBBucket();
+    MCAPI void clearDirty();
+    MCAPI void clearNeedsFinalize();
+    MCAPI bool isDirty();
+    MCAPI void markDirty();
     MCAPI void mergeAABBs();
+    MCAPI bool needsFinalize() const;
 
 protected:
 

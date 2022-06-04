@@ -17,23 +17,28 @@ class LootTableContext {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_LOOTTABLECONTEXT
 public:
-    class LootTableContext& operator=(class LootTableContext const&) = delete;
-    LootTableContext(class LootTableContext const&) = delete;
+    class LootTableContext& operator=(class LootTableContext const &) = delete;
+    LootTableContext(class LootTableContext const &) = delete;
     LootTableContext() = delete;
 #endif
 
 public:
-    MCAPI LootTableContext(float, class Level*, struct ActorUniqueID, class Player*, class ActorDamageSource const*, float, class AutomaticID<class Dimension, int>, class ItemStack const*);
+    MCAPI LootTableContext(float, class ILevel *, struct ActorUniqueID, class Player *, class Actor *, class ActorDamageSource const *, float, class AutomaticID<class Dimension, int>, class ItemStack const *);
+    MCAPI bool addVisitedTable(class LootTable const *);
     MCAPI class AutomaticID<class Dimension, int> getDimensionId() const;
-    MCAPI class Actor* getEntity(enum ActorTarget) const;
-    MCAPI class Actor* getKillerEntity() const;
-    MCAPI class Actor* getKillerPet() const;
-    MCAPI class Actor* getKillerPlayer() const;
-    MCAPI class Level* getLevel() const;
+    MCAPI class Actor * getEntity(enum ActorTarget) const;
+    MCAPI float getExplosionRadius() const;
+    MCAPI class Actor * getKilledEntity() const;
+    MCAPI class Actor * getKillerEntity() const;
+    MCAPI class Actor * getKillerPet() const;
+    MCAPI class Actor * getKillerPlayer() const;
+    MCAPI class Level * getLevel() const;
+    MCAPI float getLuck() const;
     MCAPI std::string getOriginalItemName() const;
-    MCAPI class Actor* getThisEntity() const;
-    MCAPI class ItemStack const* getTool() const;
-    MCAPI void setOriginalItemName(std::string const&);
+    MCAPI class Actor * getThisEntity() const;
+    MCAPI class ItemStack const * getTool() const;
+    MCAPI void removeVisitedTable(class LootTable const *);
+    MCAPI void setOriginalItemName(std::string const &);
     MCAPI ~LootTableContext();
 
 protected:

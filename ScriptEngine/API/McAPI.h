@@ -7,9 +7,11 @@ class McClass
 {
 public:
     static Local<Value> getBDSVersion(const Arguments& args);
+    static Local<Value> getServerProtocolVersion(const Arguments& args);
 
     static Local<Value> runcmd(const Arguments& args);
     static Local<Value> runcmdEx(const Arguments& args);
+    static Local<Value> newCommand(const Arguments& args);
     static Local<Value> regPlayerCmd(const Arguments& args);
     static Local<Value> broadcast(const Arguments& args);
 
@@ -22,7 +24,9 @@ public:
     static Local<Value> newItem(const Arguments& args);
     static Local<Value> spawnMob(const Arguments& args);
     static Local<Value> spawnItem(const Arguments& args);
+    static Local<Value> spawnSimulatedPlayer(const Arguments& args);
     static Local<Value> explode(const Arguments& args);
+    static Local<Value> cloneMob(const Arguments& args);
 
     static Local<Value> getBlock(const Arguments& args);
     static Local<Value> setBlock(const Arguments& args);
@@ -35,6 +39,8 @@ public:
     static Local<Value> setMotd(const Arguments& args);
     static Local<Value> sendCmdOutput(const Arguments& args);
     static Local<Value> crashBDS(const Arguments& args);
+
+    static Local<Value> setMaxNumPlayers(const Arguments& args);
 
     static Local<Value> newIntPos(const Arguments& args);
     static Local<Value> newFloatPos(const Arguments& args);

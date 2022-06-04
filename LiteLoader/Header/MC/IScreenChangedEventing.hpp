@@ -17,13 +17,20 @@ class IScreenChangedEventing {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ISCREENCHANGEDEVENTING
 public:
-    class IScreenChangedEventing& operator=(class IScreenChangedEventing const&) = delete;
-    IScreenChangedEventing(class IScreenChangedEventing const&) = delete;
+    class IScreenChangedEventing& operator=(class IScreenChangedEventing const &) = delete;
+    IScreenChangedEventing(class IScreenChangedEventing const &) = delete;
     IScreenChangedEventing() = delete;
 #endif
 
 public:
     /*0*/ virtual ~IScreenChangedEventing();
+    /*
+    inline  ~IScreenChangedEventing(){
+         (IScreenChangedEventing::*rv)();
+        *((void**)&rv) = dlsym("??1IScreenChangedEventing@@UEAA@XZ");
+        return (this->*rv)();
+    }
+    */
 
 protected:
 

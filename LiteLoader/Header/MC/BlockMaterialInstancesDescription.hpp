@@ -17,12 +17,13 @@ struct BlockMaterialInstancesDescription {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_BLOCKMATERIALINSTANCESDESCRIPTION
 public:
-    struct BlockMaterialInstancesDescription& operator=(struct BlockMaterialInstancesDescription const&) = delete;
-    BlockMaterialInstancesDescription(struct BlockMaterialInstancesDescription const&) = delete;
+    struct BlockMaterialInstancesDescription& operator=(struct BlockMaterialInstancesDescription const &) = delete;
+    BlockMaterialInstancesDescription(struct BlockMaterialInstancesDescription const &) = delete;
 #endif
 
 public:
     MCAPI BlockMaterialInstancesDescription();
+    MCAPI struct BlockMaterialInstancesDescription & operator=(struct BlockMaterialInstancesDescription &&);
 
 protected:
 

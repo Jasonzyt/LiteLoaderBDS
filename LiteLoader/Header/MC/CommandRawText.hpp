@@ -12,18 +12,25 @@ class CommandRawText {
 
 #define AFTER_EXTRA
 // Add Member There
+    std::string text;
 
+public:
+inline operator std::string()const
+{
+    return text;
+}
+#define DISABLE_CONSTRUCTOR_PREVENTION_COMMANDRAWTEXT
 #undef AFTER_EXTRA
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COMMANDRAWTEXT
 public:
-    class CommandRawText& operator=(class CommandRawText const&) = delete;
-    CommandRawText(class CommandRawText const&) = delete;
+    class CommandRawText& operator=(class CommandRawText const &) = delete;
+    CommandRawText(class CommandRawText const &) = delete;
     CommandRawText() = delete;
 #endif
 
 public:
-    MCAPI std::string const& getText() const;
+    MCAPI std::string const & getText() const;
 
 protected:
 

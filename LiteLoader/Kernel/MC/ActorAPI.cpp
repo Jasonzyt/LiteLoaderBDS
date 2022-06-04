@@ -21,6 +21,8 @@
 #include <MC/TeleportTarget.hpp>
 #include <MC/UserEntityIdentifierComponent.hpp>
 #include <MC/OnFireSystem.hpp>
+#include <MC/TeleportRotationData.hpp>
+#include <MC/ItemStack.hpp>
 
 class UserEntityIdentifierComponent;
 
@@ -28,7 +30,8 @@ UserEntityIdentifierComponent* Actor::getUserEntityIdentifierComponent() const {
     return SymCall("??$tryGetComponent@VUserEntityIdentifierComponent@@@Actor@@QEAAPEAVUserEntityIdentifierComponent@@XZ", UserEntityIdentifierComponent*, Actor*)((Actor*)this);
 }
 
-MCINLINE Vec3 Actor::getPosition() const {
+MCINLINE Vec3 Actor::getFeetPosition() const
+{
     return CommandUtils::getFeetPos(this);
 }
 
@@ -62,23 +65,19 @@ bool Actor::isOnGround() const {
     return (dAccess<bool, 472>(this)); // IDA DirectActorProxyImpl<IMobMovementProxy>::isOnGround
 }
 #include <MC/ActorDefinitionIdentifier.hpp>
-std::string Actor::getTypeName() const {
-    /*string res = SymCall("?EntityTypeToString@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@W4ActorType@@W4ActorTypeNamespaceRules@@@Z",
-        string, int, int) (Raw_GetEntityTypeId(actor), 1);*/
-    if (isPlayer())
-        return "minecraft:player";
-    else {
-        return getActorIdentifier().getCanonicalName();
-        //HashedString hash = dAccess<HashedString>(this, 880); //IDA Actor::Actor
-        //return hash.getString();
-    }
+std::string Actor::getTypeName() const
+{
+    return getActorIdentifier().getCanonicalName();
 }
 
-bool Actor::hurtEntity(int damage) {
-    char a[16];
-    ActorDamageSource& ad = SymCall("??0ActorDamageSource@@QEAA@W4ActorDamageCause@@@Z",
-                                    ActorDamageSource&, ActorDamageSource*, ActorDamageCause)((ActorDamageSource*)a, ActorDamageCause::None);
-    return ((Mob*)this)->_hurt(ad, damage, true, false);
+#include <MC/ActorDamageSource.hpp>
+bool Actor::hurtEntity(float damage) {
+    char source[16];
+    (*(ActorDamageSource*)source).ActorDamageSource::ActorDamageSource(ActorDamageCause::Override);
+
+    auto res = ((Mob*)this)->_hurt((*(ActorDamageSource*)source), damage, true, false);
+    (*(ActorDamageSource*)source).~ActorDamageSource();
+    return res;
 }
 
 Vec2* Actor::getDirection() const {
@@ -86,14 +85,13 @@ Vec2* Actor::getDirection() const {
 }
 
 BlockPos Actor::getBlockPos() {
-    return getPos().add(0,-1.0,0).toBlockPos();
+    return getPosition().add(0,-1.0,0).toBlockPos();
 }
 
 BlockInstance Actor::getBlockStandingOn() const
 {
     return Level::getBlockInstance(getBlockPosCurrentlyStandingOn(nullptr), getDimensionId());
 }
-
 
 ActorUniqueID Actor::getActorUniqueId() const {
     __try {
@@ -103,7 +101,6 @@ ActorUniqueID Actor::getActorUniqueId() const {
     }
 }
 
-#include <MC/TeleportRotationData.hpp>
 static_assert(sizeof(TeleportRotationData) == 32);
 bool Actor::teleport(Vec3 to, int dimID)
 {
@@ -123,7 +120,6 @@ bool Actor::teleport(Vec3 to, int dimID,float x,float y)
     return true;
 }
 
-#include <MC/ItemStack.hpp>
 ItemStack* Actor::getHandSlot() {
     if (isPlayer())
         return (ItemStack*)&((Player*)this)->getSelectedItem();
@@ -163,11 +159,11 @@ bool Actor::stopFire() {
 
 
 Vec3 Actor::getCameraPos() const {
-    Vec3 pos = *(Vec3*)&getStateVector();
+    auto& pos = this->getPosition();
     if (isSneaking()) {
-        pos.y += -0.125;
+        pos.add(0, -0.125, 0);
     } else {
-        pos.y += ((Player*)this)->getCameraOffset();
+        pos.add(0, ((Player*)this)->getCameraOffset(), 0);
     }
     return pos;
 }
@@ -182,15 +178,16 @@ Tick* Actor::getLastTick() const {
         return nullptr;
     return (Tick*)&lc->getLastTick();
 }
+enum ActorLocation;
 
 BlockInstance Actor::getBlockFromViewVector(FaceID& face, bool includeLiquid, bool solidOnly, float maxDistance, bool ignoreBorderBlocks, bool fullOnly) const {
     auto& bs = getRegion();
-    auto&& pos = getCameraPos();
+    auto& pos = getCameraPos();
     auto viewVec = getViewVector(1.0f);
     auto viewPos = pos + (viewVec * maxDistance);
     auto player = isPlayer() ? (Player*)this : nullptr;
     int maxDisManhattan = (int)((maxDistance + 1) * 2);
-    HitResult result = bs.clip(pos, viewPos, includeLiquid, solidOnly, maxDisManhattan, ignoreBorderBlocks, fullOnly, nullptr);
+    HitResult result = bs.clip(pos, viewPos, includeLiquid, solidOnly, maxDisManhattan, ignoreBorderBlocks, fullOnly, nullptr, BlockSource::ClipParameters::CHECK_ALL_BLOCKS);
     if (result.isHit() || (includeLiquid && result.isHitLiquid())) {
         BlockPos bpos{};
         if (includeLiquid && result.isHitLiquid()) {
@@ -215,7 +212,7 @@ Actor* Actor::getActorFromViewVector(float maxDistance) {
     auto& bs = getRegion();
     auto pos = getCameraPos();
     auto viewVec = getViewVector(1.0f);
-    auto aabb = *(AABB*)&_getAABBShapeNonConst();
+    auto aabb = *(AABB*)&getAABB();
     auto player = isPlayer() ? (Player*)this : nullptr;
     Actor* result = nullptr;
     float distance = 0.0f;

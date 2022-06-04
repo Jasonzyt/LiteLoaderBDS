@@ -17,15 +17,16 @@ class BoneOrientation {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_BONEORIENTATION
 public:
-    class BoneOrientation& operator=(class BoneOrientation const&) = delete;
-    BoneOrientation(class BoneOrientation const&) = delete;
+    class BoneOrientation& operator=(class BoneOrientation const &) = delete;
+    BoneOrientation(class BoneOrientation const &) = delete;
+    BoneOrientation() = delete;
 #endif
 
 public:
-    MCAPI BoneOrientation();
-    MCAPI class HashedString const& getName() const;
-    MCAPI class Vec3& getPivot();
-    MCAPI class Vec3 const& getPivot() const;
+    MCAPI void applyShortestPathBlend(class BoneOrientation const &, class BoneOrientation const &, float, float);
+    MCAPI class HashedString const & getName() const;
+    MCAPI class Vec3 & getPivot();
+    MCAPI class Vec3 const & getPivot() const;
     MCAPI void setDefaultPose();
 
 protected:

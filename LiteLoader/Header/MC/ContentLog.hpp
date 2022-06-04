@@ -17,8 +17,8 @@ class ContentLog {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_CONTENTLOG
 public:
-    class ContentLog& operator=(class ContentLog const&) = delete;
-    ContentLog(class ContentLog const&) = delete;
+    class ContentLog& operator=(class ContentLog const &) = delete;
+    ContentLog(class ContentLog const &) = delete;
 #endif
 
 public:
@@ -26,12 +26,14 @@ public:
     MCAPI ContentLog();
     MCAPI bool isEnabled() const;
     MCAPI void log(bool, enum LogLevel, enum LogArea, ...);
+    MCAPI void unregisterEndPoint(class gsl::not_null<class ContentLogEndPoint *>);
     MCAPI void updateEnabledStatus();
-    MCAPI static char const* getLogAreaName(enum LogArea);
+    MCAPI static char const * getLogAreaName(enum LogArea);
+    MCAPI static char const * getLogLevelName(enum LogLevel);
 
 protected:
 
 private:
-    MCAPI void _writeToLog(bool, enum LogArea, enum LogLevel, char* &);
+    MCAPI void _writeToLog(bool, enum LogArea, enum LogLevel, char *&);
 
 };

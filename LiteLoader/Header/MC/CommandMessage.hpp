@@ -12,19 +12,25 @@ class CommandMessage {
 
 #define AFTER_EXTRA
 // Add Member There
-char filler[32];
+    struct MessageComponent
+    /*{
+        char filler[200];
+        void* unk[2];
+        std::vector<void*> unk2[5];
+    }*/;
+    std::vector<MessageComponent> components;
 
 #undef AFTER_EXTRA
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COMMANDMESSAGE
 public:
-    class CommandMessage& operator=(class CommandMessage const&) = delete;
-    CommandMessage(class CommandMessage const&) = delete;
+    class CommandMessage& operator=(class CommandMessage const &) = delete;
+    CommandMessage(class CommandMessage const &) = delete;
 #endif
 
 public:
     MCAPI CommandMessage();
-    MCAPI std::string getMessage(class CommandOrigin const&) const;
+    MCAPI std::string getMessage(class CommandOrigin const &) const;
     MCAPI ~CommandMessage();
 
 protected:

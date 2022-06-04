@@ -17,8 +17,8 @@ class FollowMobGoal {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_FOLLOWMOBGOAL
 public:
-    class FollowMobGoal& operator=(class FollowMobGoal const&) = delete;
-    FollowMobGoal(class FollowMobGoal const&) = delete;
+    class FollowMobGoal& operator=(class FollowMobGoal const &) = delete;
+    FollowMobGoal(class FollowMobGoal const &) = delete;
     FollowMobGoal() = delete;
 #endif
 
@@ -30,20 +30,20 @@ public:
     /*4*/ virtual void __unk_vfn_4();
     /*5*/ virtual void __unk_vfn_5();
     /*6*/ virtual void tick();
-    /*7*/ virtual void appendDebugInfo(std::string&) const;
+    /*7*/ virtual void appendDebugInfo(std::string &) const;
     /*
-    inline void stop(){
-        void (FollowMobGoal::*rv)();
-        *((void**)&rv) = dlsym("?stop@FollowMobGoal@@UEAAXXZ");
-        return (this->*rv)();
-    }
     inline void start(){
         void (FollowMobGoal::*rv)();
         *((void**)&rv) = dlsym("?start@FollowMobGoal@@UEAAXXZ");
         return (this->*rv)();
     }
+    inline void stop(){
+        void (FollowMobGoal::*rv)();
+        *((void**)&rv) = dlsym("?stop@FollowMobGoal@@UEAAXXZ");
+        return (this->*rv)();
+    }
     */
-    MCAPI FollowMobGoal(class Mob&, float, float, int);
+    MCAPI FollowMobGoal(class Mob &, float, float, int);
 
 protected:
 

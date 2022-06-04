@@ -1,0 +1,20 @@
+[HEADING=1][LiteLoader Release Note][/HEADING]
+本版本是一个重要更新！请开发者及时更新SDK！
+
+[HEADING=1][主要][/HEADING]
+[LIST]
+[*]性能提升
+[/LIST]
+[IMG]https://s1.ax1x.com/2022/05/21/OjVmVI.png[/IMG]
+
+[HEADING=1][新内容][/HEADING]
+[LIST]
+[*]新添LLSE ll.hasExported API
+[/LIST]
+
+[HEADING=1][BUG修复][/HEADING]
+[LIST]
+[*]修复BlockActor::refreshData
+[/LIST]
+
+

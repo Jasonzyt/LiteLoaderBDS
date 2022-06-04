@@ -1,11 +1,8 @@
-![logo](assets/LXL.png)
+![logo](assets/LL-Logo.png)
 
-# LiteXLoader Docs
+# LiteLoaderBDS - Docs
 
-> 划时代 x 跨语言 
->
-> BDS 脚本插件加载器
+> New era plugin framework for Bedrock Dedicated Server
 
-[GitHub 开源项目](https://github.com/LiteLDev/LiteXLoader)
-[Read Docs 进入文档](/zh_CN/README.md)
-
+[GitHub](https://github.com/LiteLDev/LiteLoaderBDS)
+[Read Docs](?id=liteloaderbds-documentation)

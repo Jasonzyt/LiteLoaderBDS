@@ -17,19 +17,14 @@ class MoveTowardsRestrictionGoal {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_MOVETOWARDSRESTRICTIONGOAL
 public:
-    class MoveTowardsRestrictionGoal& operator=(class MoveTowardsRestrictionGoal const&) = delete;
-    MoveTowardsRestrictionGoal(class MoveTowardsRestrictionGoal const&) = delete;
+    class MoveTowardsRestrictionGoal& operator=(class MoveTowardsRestrictionGoal const &) = delete;
+    MoveTowardsRestrictionGoal(class MoveTowardsRestrictionGoal const &) = delete;
     MoveTowardsRestrictionGoal() = delete;
 #endif
 
 public:
     /*0*/ virtual ~MoveTowardsRestrictionGoal();
     /*
-    inline  ~MoveTowardsRestrictionGoal(){
-         (MoveTowardsRestrictionGoal::*rv)();
-        *((void**)&rv) = dlsym("??1MoveTowardsRestrictionGoal@@UEAA@XZ");
-        return (this->*rv)();
-    }
     inline bool canContinueToUse(){
         bool (MoveTowardsRestrictionGoal::*rv)();
         *((void**)&rv) = dlsym("?canContinueToUse@MoveTowardsRestrictionGoal@@UEAA_NXZ");
@@ -40,12 +35,17 @@ public:
         *((void**)&rv) = dlsym("?start@MoveTowardsRestrictionGoal@@UEAAXXZ");
         return (this->*rv)();
     }
+    inline  ~MoveTowardsRestrictionGoal(){
+         (MoveTowardsRestrictionGoal::*rv)();
+        *((void**)&rv) = dlsym("??1MoveTowardsRestrictionGoal@@UEAA@XZ");
+        return (this->*rv)();
+    }
     */
-    MCAPI MoveTowardsRestrictionGoal(class Mob&);
+    MCAPI MoveTowardsRestrictionGoal(class Mob &);
 
 protected:
-    MCAPI class Mob const& _getMob() const;
-    MCAPI bool _randomizeWantedPositionTowardsRestriction(class Vec3 const&);
+    MCAPI class Mob const & _getMob() const;
+    MCAPI bool _randomizeWantedPositionTowardsRestriction(class Vec3 const &);
 
 private:
 

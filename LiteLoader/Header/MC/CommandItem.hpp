@@ -12,20 +12,23 @@ class CommandItem {
 
 #define AFTER_EXTRA
 // Add Member There
+    short unk0; //0
+    bool unk2;  //2
+    int itemId; //4
 
 #undef AFTER_EXTRA
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COMMANDITEM
 public:
-    class CommandItem& operator=(class CommandItem const&) = delete;
-    CommandItem(class CommandItem const&) = delete;
+    class CommandItem& operator=(class CommandItem const &) = delete;
+    CommandItem(class CommandItem const &) = delete;
 #endif
 
 public:
     MCAPI CommandItem(unsigned __int64);
     MCAPI CommandItem(int, short, bool);
     MCAPI CommandItem();
-    MCAPI class std::optional<class ItemInstance> createInstance(int, int, class CommandOutput*, bool) const;
+    MCAPI class std::optional<class ItemInstance> createInstance(int, int, class CommandOutput *, bool) const;
     MCAPI int getId() const;
     MCAPI operator bool() const;
     MCAPI operator unsigned __int64() const;

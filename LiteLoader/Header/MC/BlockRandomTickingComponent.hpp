@@ -15,12 +15,13 @@ struct BlockRandomTickingComponent {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_BLOCKRANDOMTICKINGCOMPONENT
 public:
-    struct BlockRandomTickingComponent& operator=(struct BlockRandomTickingComponent const&) = delete;
-    BlockRandomTickingComponent(struct BlockRandomTickingComponent const&) = delete;
+    struct BlockRandomTickingComponent& operator=(struct BlockRandomTickingComponent const &) = delete;
+    BlockRandomTickingComponent(struct BlockRandomTickingComponent const &) = delete;
     BlockRandomTickingComponent() = delete;
 #endif
 
 public:
+    MCAPI BlockRandomTickingComponent(struct BlockRandomTickingComponent &&);
     MCAPI ~BlockRandomTickingComponent();
 
 protected:

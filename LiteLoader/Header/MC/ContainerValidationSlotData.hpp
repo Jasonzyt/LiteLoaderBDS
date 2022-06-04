@@ -15,13 +15,14 @@ struct ContainerValidationSlotData {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_CONTAINERVALIDATIONSLOTDATA
 public:
-    struct ContainerValidationSlotData& operator=(struct ContainerValidationSlotData const&) = delete;
-    ContainerValidationSlotData(struct ContainerValidationSlotData const&) = delete;
-    ContainerValidationSlotData() = delete;
+    struct ContainerValidationSlotData& operator=(struct ContainerValidationSlotData const &) = delete;
+    ContainerValidationSlotData(struct ContainerValidationSlotData const &) = delete;
 #endif
 
 public:
     MCAPI ContainerValidationSlotData(enum ContainerEnumName, int);
+    MCAPI ContainerValidationSlotData();
+    MCAPI bool matches(struct ContainerValidationSlotData const &) const;
 
 protected:
 

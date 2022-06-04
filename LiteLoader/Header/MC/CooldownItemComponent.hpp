@@ -17,8 +17,8 @@ class CooldownItemComponent {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_COOLDOWNITEMCOMPONENT
 public:
-    class CooldownItemComponent& operator=(class CooldownItemComponent const&) = delete;
-    CooldownItemComponent(class CooldownItemComponent const&) = delete;
+    class CooldownItemComponent& operator=(class CooldownItemComponent const &) = delete;
+    CooldownItemComponent(class CooldownItemComponent const &) = delete;
     CooldownItemComponent() = delete;
 #endif
 
@@ -29,7 +29,7 @@ public:
     /*3*/ virtual void __unk_vfn_3();
     /*4*/ virtual void __unk_vfn_4();
     /*5*/ virtual std::unique_ptr<class CompoundTag> buildNetworkTag() const;
-    /*6*/ virtual void initializeFromNetwork(class CompoundTag const&);
+    /*6*/ virtual void initializeFromNetwork(class CompoundTag const &);
     /*
     inline bool isNetworkComponent() const{
         bool (CooldownItemComponent::*rv)() const;
@@ -37,8 +37,9 @@ public:
         return (this->*rv)();
     }
     */
+    MCAPI CooldownItemComponent(class ComponentItem *);
     MCAPI static void bindType();
-    MCAPI static class HashedString const& getIdentifier();
+    MCAPI static class HashedString const & getIdentifier();
 
 protected:
 

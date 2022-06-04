@@ -15,13 +15,12 @@ struct MolangActorArrayPtr {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_MOLANGACTORARRAYPTR
 public:
-    struct MolangActorArrayPtr& operator=(struct MolangActorArrayPtr const&) = delete;
-    MolangActorArrayPtr(struct MolangActorArrayPtr const&) = delete;
+    struct MolangActorArrayPtr& operator=(struct MolangActorArrayPtr const &) = delete;
+    MolangActorArrayPtr(struct MolangActorArrayPtr const &) = delete;
     MolangActorArrayPtr() = delete;
 #endif
 
 public:
-    MCAPI MolangActorArrayPtr(std::vector<class Actor* >);
     MCAPI ~MolangActorArrayPtr();
 
 protected:

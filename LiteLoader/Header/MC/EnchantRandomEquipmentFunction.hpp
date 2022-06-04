@@ -2,6 +2,7 @@
 #pragma once
 #define AUTO_GENERATED
 #include "../Global.h"
+#include "Json.hpp"
 #include "LootItemFunction.hpp"
 
 #define BEFORE_EXTRA
@@ -18,15 +19,16 @@ class EnchantRandomEquipmentFunction : public LootItemFunction {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ENCHANTRANDOMEQUIPMENTFUNCTION
 public:
-    class EnchantRandomEquipmentFunction& operator=(class EnchantRandomEquipmentFunction const&) = delete;
-    EnchantRandomEquipmentFunction(class EnchantRandomEquipmentFunction const&) = delete;
+    class EnchantRandomEquipmentFunction& operator=(class EnchantRandomEquipmentFunction const &) = delete;
+    EnchantRandomEquipmentFunction(class EnchantRandomEquipmentFunction const &) = delete;
     EnchantRandomEquipmentFunction() = delete;
 #endif
 
 public:
     /*0*/ virtual ~EnchantRandomEquipmentFunction();
-    /*1*/ virtual void apply(class ItemStack&, class Random&, class LootTableContext&);
-    /*3*/ virtual void apply(class ItemInstance&, class Random&, class LootTableContext&);
+    /*1*/ virtual void apply(class ItemStack &, class Random &, class LootTableContext &);
+    /*3*/ virtual void apply(class ItemInstance &, class Random &, class LootTableContext &);
+    MCAPI static std::unique_ptr<class LootItemFunction> deserialize(class Json::Value, std::vector<std::unique_ptr<class LootItemCondition>> &);
 
 protected:
 

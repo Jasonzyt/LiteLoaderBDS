@@ -1,4 +1,4 @@
-# LiteLoaderBDS - 新时代的BDS插件加载器
+# LiteLoaderBDS - 划时代 x 跨语言BDS插件加载器
 
 [![status](https://img.shields.io/github/workflow/status/LiteLDev/LiteLoader/Build%20LiteLoader?style=for-the-badge)](https://github.com/LiteLDev/LiteLoader/actions)
 [![Discord](https://img.shields.io/discord/849252980430864384?style=for-the-badge)](https://discord.gg/27KTrxHc9t)
@@ -6,11 +6,12 @@
 [
 ![Latest Tag](https://img.shields.io/github/v/tag/LiteLDev/LiteLoader?label=LATEST%20TAG&style=for-the-badge)
 ![GitHub Releases (by Asset)](https://img.shields.io/github/downloads/LiteLDev/LiteLoader/latest/total?style=for-the-badge)
-](https://github.com/LiteLDev/LiteLoader/releases/latest)
+](https://github.com/LiteLDev/LiteLoader/releases/latest)  
+QQ群: [656669024](https://jq.qq.com/?_wv=1027&k=lagwtrfh) QQ2群: [850517473](https://jq.qq.com/?_wv=1027&k=zeUbrETH)
 
 ##### [English](README.md) | 简体中文
 
-![Logo](https://socialify.git.ci/LiteLDev/LiteLoader/image?description=1&font=Inter&forks=1&issues=1&language=1&logo=https%3A%2F%2Fgithub.com%2FLiteLDev%2FWebsite%2Fraw%2Fmain%2Fimages%2Flogo-6pndg21x.png&owner=1&pattern=Plus&pulls=1&stargazers=1)
+![LiteLoaderBDS](https://socialify.git.ci/liteldev/liteloaderbds/image?description=1&descriptionEditable=Lightweight%20%26%20Cross-language%0A%20BDS%20Plugin%20Loader&font=KoHo&forks=1&issues=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FLiteLDev%2FLiteLoaderBDS%2Fmain%2Fdocs%2Fassets%2FLL-Logo.png&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Light)
 
 `LiteLoaderBDS` 是一个非官方的 `Minecraft` 服务端插件加载器，为基岩版官方服务端`Bedrock Dedicated Server`（以下简称**BDS**）提供插件开发支持 和 插件加载服务，弥补了官方行为包开发接口长期以来存在的一些不足。
 
@@ -35,14 +36,14 @@ Logger logger("AttackLog");
 
 void PluginInit()
 {
-	LL::registerPlugin("PluginName", "Introduction", LL::Version(1, 0, 0));
+ LL::registerPlugin("PluginName", "Introduction", LL::Version(1, 0, 0));
     logger.info("插件 xxx 已加载.");
     //监听玩家攻击事件
     Event::PlayerAttackEvent::subscribe([](const Event::PlayerAttackEvent& ev) {
         Player* player = ev.mPlayer;
         Actor* actor = ev.mTarget;
         logger.info(u8"玩家:{} 攻击了 {} | 坐标 {} 维度 {}", 
-        	player->getRealName(), actor->getTypeName(), actor->getPos().toString(),
+         player->getRealName(), actor->getTypeName(), actor->getPos().toString(),
             std::to_string(actor->getDimensionId()));
         return true;
     });
@@ -52,19 +53,22 @@ void PluginInit()
 #### 脚本语言示例插件
 
 ```javascript
-//注册关服命令
-mc.regPlayerCmd("stop","关闭服务器", (pl,args) => {
-    //鉴权
-    if(!pl.isOP())
-        return true;
-    pl.tell("停服命令执行成功",1);
-    mc.broadcast("玩家" + pl.realName + "执行停服命令。服务器将在5秒之后关闭");
-    
-    //执行关服命令
-    setTimeout(() => {
-        mc.runcmd("stop");
-    },5000);
-},1);
+// 注册关服命令
+mc.listen("onServerStarted", () => {
+    const cmd = mc.newCommand("stopsvr", "关闭服务器", PermType.GameMasters);
+    cmd.overload();
+    cmd.setCallback((_cmd, ori, out, _res) => {
+        const pl = ori.player;
+        out.success("关服命令执行成功");
+        mc.broadcast(`玩家${pl.realName}执行了关服命令。服务器将在5秒之后关闭`);
+
+        //执行关服命令
+        setTimeout(() => {
+            mc.runcmd("stop");
+        }, 5000);
+    });
+    cmd.setup();
+});
 ```
 
 <br/>
@@ -73,18 +77,17 @@ mc.regPlayerCmd("stop","关闭服务器", (pl,args) => {
 
 - 💻 支持多种不同的语言开发插件，保持接口统一
 
-| 目前已支持的插件开发语言   | `C++`，`Golang`，`JavaScript`，`Lua` |
+| 目前已支持的插件开发语言   | `C++`，`Golang`，`JavaScript`，`Lua` ，`.Net`|
 | -------------------------- | ------------------------------------ |
-| **即将支持的插件开发语言** | `Python`，`Ruby`，`C#`，`TypeScript` |
+| **即将支持的插件开发语言** | `Python`，`Ruby`，`TypeScript` |
 
 - 📕 开发体验流畅，兼容性强
   - 拥有自动生成的C++头文件，可以访问`BDS`所有的类和功能，拥有完善的工具链支持，且功能不断发展中
   - 对于脚本语言插件，拥有多语言代码补全库、强大的VSCode插件、热加载系统 ......众多辅助工具，帮你更有效地写好每一行代码
   - 版本更新时，将保证 API 基本 **向下兼容**，插件几乎不需要随版本更新而修改代码。`LiteLoader`系列独有符号查找技术，跨版本 **自动适配** 不再是梦想
 
-
 - 📋 开发文档完善，讲解详细
-  - 欢迎 👉[移步 LiteLoader 文档站](https://lxl.litebds.com/)👈 查看更多  
+  - 欢迎 👉[移步 LiteLoader 文档站](https://docs.litebds.com/)👈 查看更多  
 
 - 🎈 大量封装完善的的接口
   - 拥有众多游戏API支持：玩家，实体，方块，物品，容器，NBT，服务器系统……
@@ -98,7 +101,7 @@ mc.regPlayerCmd("stop","关闭服务器", (pl,args) => {
 - 🏆 应用生态健全
   - 海量现有插件，成熟发布平台，即刻 👉[前往MineBBS](https://www.minebbs.com/resources/?prefix_id=67)👈 查找并下载你喜欢的 LL 插件  
 - 🏃 开源 & 社区共建
-  - 项目采用 `GPL-3.0` 开源许可证，**永远不会** 收费或者推出商业版。  
+  - 项目采用 `AGPL-3.0` 开源许可证，**永远不会** 收费或者推出商业版。  
   - 设计思想采取 **去中心化** 设计，放心享受 **自由** 的插件加载框架！  
 
 ------
@@ -110,16 +113,29 @@ mc.regPlayerCmd("stop","关闭服务器", (pl,args) => {
 1. 前往 [MineBBS](https://www.minebbs.com/liteloader/) 或 [GitHub Release](https://github.com/LiteLDev/LiteLoader/releases) 下载最新的 `LiteLoader-版本号.zip`
 2. 将压缩文件内的所有内容解压到 `bedrock_server.exe` 所在的目录。如果解压的过程中提示文件有冲突，选择覆盖即可。
 3. 保证 `bedrock_server.pdb`文件存在。  
-   运行 `SymDB2.exe` 来生成符号文件（`bedrock_server.symdb2`）和有导出符号的BDS（`bedrock_server_mod.exe`）  
-   当控制台输出 `请按任意键继续. . . ` 时，按任意键关闭窗口
+   运行 `LLPeEditor.exe` 来生成具有导出符号的BDS（`bedrock_server_mod.exe`）  
+4. 当控制台输出 `请按任意键继续. . .` 时，按任意键关闭窗口
 3. 运行 `bedrock_server_mod.exe` 开服
 
 ### 对于 Linux 用户
+
+#### 安装脚本(Ubuntu)
+
+```
+wget https://github.com/LiteLDev/LiteLoaderBDS/raw/beta/Scripts/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+#### Docker
+
 在终端中输入：
+
 ```
 docker pull shrbox/liteloaderbds
 docker create --name liteloader -p 19132:19132/udp -i -t shrbox/liteloaderbds
 ```
+
 启动服务器：`docker container start liteloader`  
 强制停止服务器（不推荐）：`docker container stop liteloader`  
 进入控制台：`docker attach liteloader`  
@@ -132,8 +148,8 @@ docker create --name liteloader -p 19132:19132/udp -i -t shrbox/liteloaderbds
 
 `LiteLoader`主要插件发布渠道：
 
-- MineBBS论坛：[点击这里 前往下载](https://www.minebbs.com/resources/?prefix_id=59)
-- GitHub Discussion：[Discussions · LiteLDev/LiteLoaderBDS](https://github.com/LiteLDev/LiteLoaderBDS/discussions)
+- [官方论坛](https://forum.litebds.com/)
+- [MineBBS](https://www.minebbs.com/resources/?prefix_id=59)
 
 ### 插件的安装
 
@@ -141,13 +157,15 @@ docker create --name liteloader -p 19132:19132/udp -i -t shrbox/liteloaderbds
 2. 将所有获取到的内容直接放入`plugins`目录
 3. 运行`bedrock_server_mod.exe` 开服
 
-更多**安装与使用指南** ，请👉[移步 LiteLoader 文档站](https://lxl.litebds.com/#/zh_CN/Usage/)👈查看
+更多**安装与使用指南** ，请👉[移步 LiteLoader 文档站](https://docs.litebds.com/#/zh_CN/Usage/)👈查看
 
 ## 📥 自动更新
 
 从`2.0.0`版本开始，LiteLoader增加了自动更新功能  
 如果BDS版本相同，LiteLoader的更新将会**自动推送**，并且**自动在下一次服务端开启时安装**  
 第一时间获取最新功能更新！ 免去重复手动升级的烦恼~
+
+你也可以在控制台使用 `ll upgrade` 命令手动检查更新。
 
 <br/>
 
@@ -163,7 +181,7 @@ docker create --name liteloader -p 19132:19132/udp -i -t shrbox/liteloaderbds
 1. 编译生成，并按提示选择相应的PDB文件以生成依赖库lib
 1. 复制插件到 plugins 目录进行测试
 
-具体插件开发示例与指导，请👉[移步 LiteLoader 文档站](https://lxl.litebds.com/#/zh_CN/Usage/)👈查看  
+具体插件开发示例与指导，请👉[移步 LiteLoader 文档站](https://docs.litebds.com/#/zh_CN/Usage/)👈查看  
 如果有修订需求或者有新增API的需要，欢迎联系作者或者发布Issue  
 
 ### 使用脚本语言开发插件
@@ -172,12 +190,12 @@ docker create --name liteloader -p 19132:19132/udp -i -t shrbox/liteloaderbds
 2. 编写代码
 3. 复制插件到 plugins 目录进行测试
 
-请👉[移步 LiteLoader 文档站](https://lxl.litebds.com/#/zh_CN/Development/)👈查看详细的**API文档**和**插件开发教程**  
+请👉[移步 LiteLoader 文档站](https://docs.litebds.com/#/zh_CN/Development/)👈查看详细的**API文档**和**插件开发教程**  
 如果有修订需求或者有新增API的需要，欢迎联系作者或者发布Issue  
 
 ### 示例插件
 
-[点击这里](https://github.com/LiteLDev-LXL) 查看更多开源的 LiteLoader 插件，作为示例插件。  
+[点击这里](https://github.com/LiteLDev) 查看更多开源的 LiteLoader 插件，作为示例插件。  
 你可以直接在生产环境中使用它们
 也可以在这里学习插件开发的方法和技巧
 
@@ -191,11 +209,11 @@ docker create --name liteloader -p 19132:19132/udp -i -t shrbox/liteloaderbds
 只有你想不到，没有他做不到  
 用过绝不后悔的顶级插件开发体验！
 
-![LXLDevHelper](docs/assets/LXLDevHelper.gif)
+![LLScriptHelper](docs/assets/LXLDevHelper.gif)
 
-[点击这里](https://www.minebbs.com/resources/lxldevhelper.2672/)
+[点击这里](https://www.minebbs.com/resources/llscripthelper.2672/)
 查看扩展说明与介绍  
-VSCode扩展商店搜索`LXL`，安装**LXLDevHelper**，即刻体验
+VSCode扩展商店搜索`LLScriptHelper`，安装**LLScriptHelper**，即刻体验
 
 <br>
 
@@ -213,16 +231,16 @@ VSCode扩展商店搜索`LXL`，安装**LXLDevHelper**，即刻体验
 
 <br>
 
-### 开发辅助工具 - CommonJs  for LXL
+### 开发辅助工具 - CommonJs  for LLSE
 
-CJS.JS作者是callstackexceed，这个插件为在LXL下使用Js开发插件提供了大家熟知的CommonJS接口，方便Js插件的模块化设计
+CJS.JS作者是callstackexceed，这个插件为在LLSE下使用Js开发插件提供了大家熟知的CommonJS接口，方便Js插件的模块化设计
 
 ![CommonJs](docs/assets/CommonJS.png)
 
 [点击这里](https://github.com/callstackexceed/cjs.js) 前往GitHub查看使用说明，并下载使用
 
 项目作者callstackexceed，也是MC addon `NormaConstructor`的一个开发者。  
-`NormaConstructor`是一个开源的快速建造（类WorldEdit）插件，目前运行在Scripting API和LXL上。  
+`NormaConstructor`是一个开源的快速建造（类WorldEdit）插件，目前运行在Scripting API和LLSE上。  
 NC不仅需要用户，也需要开发人员。欢迎大家在 [MineBBS](https://www.minebbs.com/resources/integral-worldedit-liteloader.2738/) 和 mcpedl 关注 `NormaConstructor` 的相关进展
 
 <br/>
@@ -232,7 +250,7 @@ NC不仅需要用户，也需要开发人员。欢迎大家在 [MineBBS](https:/
 ## 🔨 构建项目
 
 > 前往 [`GitHub Actions`](https://github.com/LiteLDev/LiteLoaderBDS/actions) 来获取最新的构建工件(artifact)
->   
+>
 > 当然，如果您愿意自己构建项目，或者向 LiteLoader 贡献代码，您可以按照以下说明自行构建项目
 
 1. 安装最新的 **Microsoft Visual Studio** 和标准的 C++ 桌面开发套件
@@ -256,7 +274,7 @@ NC不仅需要用户，也需要开发人员。欢迎大家在 [MineBBS](https:/
 
 ⭐⭐⭐我们欢迎您的贡献！⭐⭐⭐
 
-PS：如果你有意为LL贡献代码，欢迎👉[移步 LiteLoader 文档站](https://lxl.litebds.com/#/zh_CN/Maintance/)👈查看 **项目维护与支持文档**  
+PS：如果你有意为LL贡献代码，欢迎👉[移步 LiteLoader 文档站](https://docs.litebds.com/#/zh_CN/Maintance/)👈查看 **项目维护与支持文档**  
 
 ------
 
@@ -269,21 +287,24 @@ PS：如果你有意为LL贡献代码，欢迎👉[移步 LiteLoader 文档站](
 - 如果您违反了 **EULA**，任何法律责任都与开发者**无关**
 - **开发者不对您负责，开发者没有义务为你编写代码、为你使用造成的任何后果负责**
 
-另外，您需要遵守本项目的`GPL-3.0`开源许可证条款，以及下列提到的各关联项目的开源许可证条款
+另外，您需要遵守本项目的`AGPL-3.0`开源许可证条款，以及下列提到的各关联项目的开源许可证条款
 
-[LiteLoader](https://github.com/LiteLDev/LiteLoader) GPLv3以及额外限制和例外  
-[BedrockX](https://github.com/Sysca11/BedrockX) GPLv3以及额外限制和例外   
+[LiteLoader](https://github.com/LiteLDev/LiteLoader) AGPLv3以及额外限制和例外  
+[BedrockX](https://github.com/Sysca11/BedrockX) GPLv3以及额外限制和例外  
 [ElementZero](https://github.com/Element-0/ElementZero) GPLv3  
-[ScriptX](https://github.com/Tencent/ScriptX) Apache License Version 2.0    
+[ScriptX](https://github.com/Tencent/ScriptX) Apache License Version 2.0  
 [ChakraCore](https://github.com/chakra-core/ChakraCore) MIT License  
 [OpenSSL](https://github.com/openssl/openssl) Apache-2.0 License  
 [SimpleIni](https://github.com/brofield/simpleini) MIT License  
 [Nlohmann-Json](https://github.com/nlohmann/json) MIT License  
 [nbt-cpp](https://github.com/handtruth/nbt-cpp) MIT License  
-[Hash](https://github.com/Chocobo1/Hash) GPL v3    
-[ThreadPool](https://github.com/jhasse/ThreadPool) Zlib License    
-[LightWebSocketClient](https://github.com/cyanray/LightWebSocketClient) MIT License
-[magic_enum](https://github.com/Neargye/magic_enum) MIT License
+[Hash](https://github.com/Chocobo1/Hash) GPL v3  
+[ThreadPool](https://github.com/jhasse/ThreadPool) Zlib License  
+[LightWebSocketClient](https://github.com/cyanray/LightWebSocketClient) MIT License  
+[magic_enum](https://github.com/Neargye/magic_enum) MIT License  
+[dyncall](https://www.dyncall.org/index) ISC license  
+[vcproxy](https://github.com/pr701/vcproxy) MIT License 
+[RawPDB](https://github.com/MolecularMatters/raw_pdb) BSD 2-Clause License  
 
 ### 额外限制和例外
 
@@ -291,6 +312,8 @@ PS：如果你有意为LL贡献代码，欢迎👉[移步 LiteLoader 文档站](
 > 不要作恶。
 
 虽然我们期望建立一个开源社区，但是强迫一切开源会毁了这个社区。 因此，您可以使用任何开源许可证编写基于"LiteLoader"的插件，甚至不发布您的源代码。 但是如果你修改了框架或者基于这个框架编写了一个新的框架，你必须开源它。
+
+如果你想要分发，转载本框架，你必须得到我们的授权！
 
 ## 🏆 致谢
 
@@ -311,17 +334,3 @@ PS：如果你有意为LL贡献代码，欢迎👉[移步 LiteLoader 文档站](
 [<img src="https://upload.cc/i1/2021/12/29/XNohu5.png" width="200"/>](https://www.jetbrains.com/)
 
 <br>
-
-## 📞 联系我们
-
-LiteLoader QQ交流群：656669024 [点击加入](https://jq.qq.com/?_wv=1027&k=lagwtrfh)  
-LiteLoader QQ交流2群：850517473 [点击加入](https://jq.qq.com/?_wv=1027&k=zeUbrETH)    
-Discord 频道：#LiteLoaderBDS  [点击加入](https://discord.gg/4tBQHc9u7p)  
-Telegram 频道：#LiteLoader [点击加入](https://t.me/LiteLoader)
-
-欢迎反馈崩溃和版本适配问题，以及参与相关技术讨论与交流
-
-## 💕赞助作者💕
-
-项目已接入爱发电 [赞助我们(爱发电)](https://afdian.net/@liteldev) [赞助我们(爱发电)](https://afdian.net/@LiteXLoader?tab=home)    
-Patreon Sponser [Click Here](https://www.patreon.com/litexloader) 

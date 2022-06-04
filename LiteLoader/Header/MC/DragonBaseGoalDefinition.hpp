@@ -17,20 +17,26 @@ class DragonBaseGoalDefinition {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_DRAGONBASEGOALDEFINITION
 public:
-    class DragonBaseGoalDefinition& operator=(class DragonBaseGoalDefinition const&) = delete;
-    DragonBaseGoalDefinition(class DragonBaseGoalDefinition const&) = delete;
-    DragonBaseGoalDefinition() = delete;
+    class DragonBaseGoalDefinition& operator=(class DragonBaseGoalDefinition const &) = delete;
+    DragonBaseGoalDefinition(class DragonBaseGoalDefinition const &) = delete;
 #endif
 
 public:
     /*0*/ virtual ~DragonBaseGoalDefinition();
     /*
-    inline bool validateMobType(class Mob& a0){
-        bool (DragonBaseGoalDefinition::*rv)(class Mob&);
+    inline bool validateMobType(class Mob & a0){
+        bool (DragonBaseGoalDefinition::*rv)(class Mob &);
         *((void**)&rv) = dlsym("?validateMobType@DragonBaseGoalDefinition@@UEAA_NAEAVMob@@@Z");
-        return (this->*rv)(std::forward<class Mob&>(a0));
+        return (this->*rv)(std::forward<class Mob &>(a0));
+    }
+    inline  ~DragonBaseGoalDefinition(){
+         (DragonBaseGoalDefinition::*rv)();
+        *((void**)&rv) = dlsym("??1DragonBaseGoalDefinition@@UEAA@XZ");
+        return (this->*rv)();
     }
     */
+    MCAPI DragonBaseGoalDefinition();
+    MCAPI void initialize(class EntityContext &, class DragonBaseGoal &);
 
 protected:
 

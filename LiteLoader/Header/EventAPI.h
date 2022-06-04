@@ -534,7 +534,7 @@ class MobHurtEvent : public EventTemplate<MobHurtEvent>
 public:
     Mob* mMob;
     ActorDamageSource* mDamageSource;
-    int mDamage;
+    float mDamage;
 };
 
 class MobDieEvent : public EventTemplate<MobDieEvent>
@@ -647,6 +647,29 @@ class PlayerBedEnterEvent : public EventTemplate<PlayerBedEnterEvent>
 public:
     Player* mPlayer;
     BlockInstance* mBlockInstance;
+};
+
+class ScriptPluginManagerEvent : public EventTemplate<ScriptPluginManagerEvent>
+{
+public:
+    enum class Operation
+    { Load, Unload, Reload };
+
+    Operation operation;
+    std::string target;
+    std::string otherInfo;
+    std::string pluginExtention;
+
+    bool success = false;
+};
+
+class MobSpawnEvent : public EventTemplate<MobSpawnEvent>
+{
+public:
+    string mTypeName;
+    Vec3 mPos;
+    int mDimensionId;
+	
 };
 
 }; // namespace Event

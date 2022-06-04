@@ -17,26 +17,26 @@ class AppPlatformListener {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_APPPLATFORMLISTENER
 public:
-    class AppPlatformListener& operator=(class AppPlatformListener const&) = delete;
-    AppPlatformListener(class AppPlatformListener const&) = delete;
+    class AppPlatformListener& operator=(class AppPlatformListener const &) = delete;
+    AppPlatformListener(class AppPlatformListener const &) = delete;
 #endif
 
 public:
     /*0*/ virtual ~AppPlatformListener();
     /*
-    inline void onClipboardCopy(std::string const& a0){
-        void (AppPlatformListener::*rv)(std::string const&);
+    inline void onClipboardCopy(std::string const & a0){
+        void (AppPlatformListener::*rv)(std::string const &);
         *((void**)&rv) = dlsym("?onClipboardCopy@AppPlatformListener@@UEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z");
-        return (this->*rv)(std::forward<std::string const&>(a0));
-    }
-    inline void onResizeEnd(){
-        void (AppPlatformListener::*rv)();
-        *((void**)&rv) = dlsym("?onResizeEnd@AppPlatformListener@@UEAAXXZ");
-        return (this->*rv)();
+        return (this->*rv)(std::forward<std::string const &>(a0));
     }
     inline void onAppPreSuspended(){
         void (AppPlatformListener::*rv)();
         *((void**)&rv) = dlsym("?onAppPreSuspended@AppPlatformListener@@UEAAXXZ");
+        return (this->*rv)();
+    }
+    inline void onResizeEnd(){
+        void (AppPlatformListener::*rv)();
+        *((void**)&rv) = dlsym("?onResizeEnd@AppPlatformListener@@UEAAXXZ");
         return (this->*rv)();
     }
     inline void onResizeBegin(){
@@ -79,19 +79,19 @@ public:
         *((void**)&rv) = dlsym("?onAppSuspended@AppPlatformListener@@UEAAXXZ");
         return (this->*rv)();
     }
-    inline void onPushNotificationReceived(class PushNotificationMessage const& a0){
-        void (AppPlatformListener::*rv)(class PushNotificationMessage const&);
+    inline void onPushNotificationReceived(class PushNotificationMessage const & a0){
+        void (AppPlatformListener::*rv)(class PushNotificationMessage const &);
         *((void**)&rv) = dlsym("?onPushNotificationReceived@AppPlatformListener@@UEAAXAEBVPushNotificationMessage@@@Z");
-        return (this->*rv)(std::forward<class PushNotificationMessage const&>(a0));
-    }
-    inline void onLowMemory(){
-        void (AppPlatformListener::*rv)();
-        *((void**)&rv) = dlsym("?onLowMemory@AppPlatformListener@@UEAAXXZ");
-        return (this->*rv)();
+        return (this->*rv)(std::forward<class PushNotificationMessage const &>(a0));
     }
     inline void onDeviceLost(){
         void (AppPlatformListener::*rv)();
         *((void**)&rv) = dlsym("?onDeviceLost@AppPlatformListener@@UEAAXXZ");
+        return (this->*rv)();
+    }
+    inline void onLowMemory(){
+        void (AppPlatformListener::*rv)();
+        *((void**)&rv) = dlsym("?onLowMemory@AppPlatformListener@@UEAAXXZ");
         return (this->*rv)();
     }
     inline void onAppResumed(){
@@ -99,15 +99,15 @@ public:
         *((void**)&rv) = dlsym("?onAppResumed@AppPlatformListener@@UEAAXXZ");
         return (this->*rv)();
     }
+    inline void onClipboardPaste(std::string const & a0){
+        void (AppPlatformListener::*rv)(std::string const &);
+        *((void**)&rv) = dlsym("?onClipboardPaste@AppPlatformListener@@UEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z");
+        return (this->*rv)(std::forward<std::string const &>(a0));
+    }
     inline void onAppTerminated(){
         void (AppPlatformListener::*rv)();
         *((void**)&rv) = dlsym("?onAppTerminated@AppPlatformListener@@UEAAXXZ");
         return (this->*rv)();
-    }
-    inline void onClipboardPaste(std::string const& a0){
-        void (AppPlatformListener::*rv)(std::string const&);
-        *((void**)&rv) = dlsym("?onClipboardPaste@AppPlatformListener@@UEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z");
-        return (this->*rv)(std::forward<std::string const&>(a0));
     }
     inline  ~AppPlatformListener(){
          (AppPlatformListener::*rv)();
@@ -116,7 +116,6 @@ public:
     }
     */
     MCAPI AppPlatformListener();
-    MCAPI void initListener(float);
     MCAPI void terminate();
 
 protected:

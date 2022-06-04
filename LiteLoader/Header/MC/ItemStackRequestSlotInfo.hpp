@@ -15,12 +15,13 @@ struct ItemStackRequestSlotInfo {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ITEMSTACKREQUESTSLOTINFO
 public:
-    struct ItemStackRequestSlotInfo& operator=(struct ItemStackRequestSlotInfo const&) = delete;
-    ItemStackRequestSlotInfo(struct ItemStackRequestSlotInfo const&) = delete;
+    struct ItemStackRequestSlotInfo& operator=(struct ItemStackRequestSlotInfo const &) = delete;
+    ItemStackRequestSlotInfo(struct ItemStackRequestSlotInfo const &) = delete;
     ItemStackRequestSlotInfo() = delete;
 #endif
 
 public:
+    MCAPI bool matchesContainerAndSlot(struct ItemStackRequestSlotInfo const &) const;
     MCAPI ~ItemStackRequestSlotInfo();
 
 protected:

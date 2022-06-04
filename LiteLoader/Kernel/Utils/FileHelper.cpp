@@ -1,4 +1,5 @@
 #include <Utils/FileHelper.h>
+#include <Utils/StringHelper.h>
 #include <io.h>
 #include <filesystem>
 using namespace std;
@@ -37,7 +38,7 @@ std::optional<std::string> ReadAllFile(const std::string& filePath, bool isBinar
     if (isBinary)
         mode |= std::ios_base::binary;
 
-    fRead.open(filePath, mode);
+    fRead.open(str2wstr(filePath), mode);
     if (!fRead.is_open()) {
         return std::nullopt;
     }
@@ -55,7 +56,7 @@ bool WriteAllFile(const std::string& filePath, const std::string& content, bool 
     if (isBinary)
         mode |= std::ios_base::binary;
 
-    fWrite.open(filePath, mode);
+    fWrite.open(str2wstr(filePath), mode);
     if (!fWrite.is_open()) {
         return false;
     }
@@ -82,5 +83,5 @@ vector<string> GetFileNameList(const std::string& dir)
 bool CreateDirs(const string path)
 {
     std::error_code ec;
-    return std::filesystem::create_directories(std::filesystem::path(path).remove_filename(), ec);
+    return std::filesystem::create_directories(std::filesystem::path(str2wstr(path)).remove_filename(), ec);
 }

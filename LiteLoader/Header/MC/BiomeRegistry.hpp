@@ -24,8 +24,8 @@ struct BiomeParent {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_BIOMEREGISTRY
 public:
-    class BiomeRegistry& operator=(class BiomeRegistry const&) = delete;
-    BiomeRegistry(class BiomeRegistry const&) = delete;
+    class BiomeRegistry& operator=(class BiomeRegistry const &) = delete;
+    BiomeRegistry(class BiomeRegistry const &) = delete;
 #endif
 
 public:
@@ -43,23 +43,23 @@ public:
     }
     */
     MCAPI BiomeRegistry();
-    MCAPI void forEachBiome(class std::function<void (class Biome& )>) const;
-    MCAPI class TagRegistry<struct IDType<struct BiomeTagIDType>, struct IDType<struct BiomeTagSetIDType> > const& getTagRegistry() const;
-    MCAPI class TagRegistry<struct IDType<struct BiomeTagIDType>, struct IDType<struct BiomeTagSetIDType> >& getTagRegistry();
-    MCAPI void initServerFromPacks(class ResourcePackManager&, class IWorldRegistriesProvider&);
+    MCAPI void forEachBiome(class std::function<void (class Biome &)>) const;
+    MCAPI class TagRegistry<struct IDType<struct BiomeTagIDType>, struct IDType<struct BiomeTagSetIDType>> const & getTagRegistry() const;
+    MCAPI class TagRegistry<struct IDType<struct BiomeTagIDType>, struct IDType<struct BiomeTagSetIDType>> & getTagRegistry();
+    MCAPI void initServerFromPacks(class ResourcePackManager &, class IWorldRegistriesProvider &);
     MCAPI bool isRegistrationFinished() const;
-    MCAPI class Biome* lookupById(int) const;
-    MCAPI class Biome* lookupByName(std::string const&) const;
-    MCAPI class Biome& registerBiome(std::string const&);
+    MCAPI class Biome * lookupById(int) const;
+    MCAPI class Biome * lookupByName(std::string const &) const;
+    MCAPI class Biome & registerBiome(std::string const &);
     MCAPI void registrationFinished();
 
 protected:
 
 private:
-    MCAPI bool _addToInheritanceTree(class InheritanceTree<struct BiomeRegistry::BiomeParent>&, std::string const&, class Json::Value&&, class SemVersion const&);
-    MCAPI class InheritanceTree<struct BiomeRegistry::BiomeParent> _buildInheritanceTree(class ResourcePackManager&);
+    MCAPI bool _addToInheritanceTree(class InheritanceTree<struct BiomeRegistry::BiomeParent> &, std::string const &, class Json::Value &&, class SemVersion const &);
+    MCAPI class InheritanceTree<struct BiomeRegistry::BiomeParent> _buildInheritanceTree(class ResourcePackManager &);
     MCAPI void _initTagRegistry();
-    MCAPI bool _loadSingleBiome(class ResourcePackManager&, class InheritanceTree<struct BiomeRegistry::BiomeParent>&, std::string const&);
-    MCAPI void _mergeDataInheritance(class Json::Value&, class SemVersion&, class InheritanceTree<struct BiomeRegistry::BiomeParent>&, struct BiomeRegistry::BiomeParent const&);
+    MCAPI bool _loadSingleBiome(class ResourcePackManager &, class InheritanceTree<struct BiomeRegistry::BiomeParent> &, std::string const &);
+    MCAPI void _mergeDataInheritance(class Json::Value &, class SemVersion &, class InheritanceTree<struct BiomeRegistry::BiomeParent> &, struct BiomeRegistry::BiomeParent const &);
 
 };

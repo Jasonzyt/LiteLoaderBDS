@@ -6,7 +6,8 @@
     </Filter>
     <Filter Include="Main">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+      <Extensions>
+      </Extensions>
     </Filter>
     <Filter Include="Lib">
       <UniqueIdentifier>{3aacf150-55b2-4166-9782-9832fe58a15f}</UniqueIdentifier>
@@ -16,6 +17,9 @@
     </Filter>
     <Filter Include="Tools">
       <UniqueIdentifier>{c322c5ad-e260-4fba-b9d5-f73c3fcbe583}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{01a1c5e2-9b11-4e4b-aece-b6f0aaef4b25}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -28,7 +32,7 @@
     <ClCompile Include="API\BlockAPI.cpp">
       <Filter>API</Filter>
     </ClCompile>
-    <ClCompile Include="API\CommandAPI.cpp">
+    <ClCompile Include="API\CommandCompatibleAPI.cpp">
       <Filter>API</Filter>
     </ClCompile>
     <ClCompile Include="API\DataAPI.cpp">
@@ -142,8 +146,29 @@
     <ClCompile Include="BuiltinCommands.cpp">
       <Filter>Main</Filter>
     </ClCompile>
+    <ClCompile Include="API\CommandAPI.cpp">
+      <Filter>API</Filter>
+    </ClCompile>
+    <ClCompile Include="API\CommandOriginAPI.cpp">
+      <Filter>API</Filter>
+    </ClCompile>
+    <ClCompile Include="API\CommandOutputAPI.cpp">
+      <Filter>API</Filter>
+    </ClCompile>
     <ClCompile Include="PluginManager.cpp">
       <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\EngineManager.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="API\RemoteCallAPI.cpp">
+      <Filter>API</Filter>
+    </ClCompile>
+    <ClCompile Include="API\DatabaseAPI.cpp">
+      <Filter>API</Filter>
+    </ClCompile>
+    <ClCompile Include="API\SimulatedPlayerAPI.cpp">
+      <Filter>API</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -153,7 +178,7 @@
     <ClInclude Include="API\BlockAPI.h">
       <Filter>API</Filter>
     </ClInclude>
-    <ClInclude Include="API\CommandAPI.h">
+    <ClInclude Include="API\CommandCompatibleAPI.h">
       <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="API\DataAPI.h">
@@ -273,6 +298,27 @@
     <ClInclude Include="PluginManager.h">
       <Filter>Main</Filter>
     </ClInclude>
+    <ClInclude Include="API\CommandAPI.h">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="API\CommandOriginAPI.h">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="API\CommandOutputAPI.h">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\EngineManager.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="API\RemoteCallAPI.h">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="API\DatabaseAPI.h">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="third-party\cpp-base64\lib\cpp-base64.lib">
@@ -320,5 +366,10 @@
     <Library Include="third-party\V8\lib\zlib.lib">
       <Filter>Lib</Filter>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ScriptEngine.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

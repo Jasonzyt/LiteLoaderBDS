@@ -15,14 +15,16 @@
     <ClCompile Include="API\BaseAPI.cpp" />
     <ClCompile Include="API\BlockAPI.cpp" />
     <ClCompile Include="API\BlockEntityAPI.cpp" />
-    <ClCompile Include="API\CommandAPI.cpp" />
+    <ClCompile Include="API\CommandCompatibleAPI.cpp" />
     <ClCompile Include="API\ContainerAPI.cpp" />
     <ClCompile Include="API\DataAPI.cpp" />
+    <ClCompile Include="API\DatabaseAPI.cpp" />
     <ClCompile Include="API\DeviceAPI.cpp" />
     <ClCompile Include="API\EntityAPI.cpp" />
     <ClCompile Include="API\EventAPI.cpp" />
     <ClCompile Include="API\FileSystemAPI.cpp" />
     <ClCompile Include="API\McAPI.cpp" />
+    <ClCompile Include="API\RemoteCallAPI.cpp" />
     <ClCompile Include="API\ScoreboardAPI.cpp" />
     <ClCompile Include="API\GameUtilsAPI.cpp" />
     <ClCompile Include="API\GuiAPI.cpp" />
@@ -36,6 +38,10 @@
     <ClCompile Include="API\ServerAPI.cpp" />
     <ClCompile Include="API\SystemAPI.cpp" />
     <ClCompile Include="BindAPIs.cpp" />
+    <ClCompile Include="API\CommandAPI.cpp" />
+    <ClCompile Include="API\CommandOriginAPI.cpp" />
+    <ClCompile Include="API\CommandOutputAPI.cpp" />
+    <ClCompile Include="Engine\EngineManager.cpp" />
     <ClCompile Include="Engine\LocalShareData.cpp" />
     <ClCompile Include="Engine\MessageSystem.cpp" />
     <ClCompile Include="Engine\OperationCount.cpp" />
@@ -49,6 +55,7 @@
     <ClCompile Include="EconomySystem.cpp" />
     <ClCompile Include="PluginManager.cpp" />
     <ClCompile Include="SafeGuardRecord.cpp" />
+    <ClCompile Include="API\SimulatedPlayerAPI.cpp" />
     <ClCompile Include="Tools\IniHelper.cpp" />
     <ClCompile Include="Tools\Utils.cpp" />
     <ClCompile Include="ScriptEngine.cpp" />
@@ -58,13 +65,15 @@
     <ClInclude Include="API\BaseAPI.h" />
     <ClInclude Include="API\BlockAPI.h" />
     <ClInclude Include="API\BlockEntityAPI.h" />
-    <ClInclude Include="API\CommandAPI.h" />
+    <ClInclude Include="API\CommandCompatibleAPI.h" />
     <ClInclude Include="API\ContainerAPI.h" />
     <ClInclude Include="API\DataAPI.h" />
+    <ClInclude Include="API\DatabaseAPI.h" />
     <ClInclude Include="API\DeviceAPI.h" />
     <ClInclude Include="API\EntityAPI.h" />
     <ClInclude Include="API\EventAPI.h" />
     <ClInclude Include="API\FileSystemAPI.h" />
+    <ClInclude Include="API\RemoteCallAPI.h" />
     <ClInclude Include="API\ScoreboardAPI.h" />
     <ClInclude Include="API\GameUtilsAPI.h" />
     <ClInclude Include="API\GuiAPI.h" />
@@ -79,7 +88,11 @@
     <ClInclude Include="API\ServerAPI.h" />
     <ClInclude Include="API\McAPI.h" />
     <ClInclude Include="API\SystemAPI.h" />
+    <ClInclude Include="API\CommandOriginAPI.h" />
+    <ClInclude Include="API\CommandOutputAPI.h" />
     <ClInclude Include="Configs.h" />
+    <ClInclude Include="API\CommandAPI.h" />
+    <ClInclude Include="Engine\EngineManager.h" />
     <ClInclude Include="Engine\GlobalShareData.h" />
     <ClInclude Include="Engine\EngineOwnData.h" />
     <ClInclude Include="Engine\LoaderHelper.h" />
@@ -92,6 +105,7 @@
     <ClInclude Include="Global.hpp" />
     <ClInclude Include="EconomicSystem.h" />
     <ClInclude Include="PluginManager.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SafeGuardRecord.h" />
     <ClInclude Include="Tools\IniHelper.h" />
     <ClInclude Include="Tools\JsonHelper.h" />
@@ -115,11 +129,14 @@
     <Library Include="third-party\V8\lib\v8_libplatform.lib" />
     <Library Include="third-party\V8\lib\zlib.lib" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ScriptEngine.rc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{3524e651-fdfa-498d-be39-7df750172672}</ProjectGuid>
-    <RootNamespace>LiteXLoaderJs</RootNamespace>
+    <RootNamespace>LLSEJs</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>ScriptEngine</ProjectName>
   </PropertyGroup>
@@ -179,6 +196,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ExceptionHandling>Async</ExceptionHandling>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>Level1</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -204,6 +222,10 @@ LibraryBuilder.exe
 
 :end</Command>
     </PreBuildEvent>
+    <ResourceCompile />
+    <ResourceCompile>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;SCRIPTX_LANG_LUA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Js|x64'">
     <ClCompile>
@@ -220,6 +242,7 @@ LibraryBuilder.exe
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ExceptionHandling>Async</ExceptionHandling>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>Level1</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -245,6 +268,11 @@ LibraryBuilder.exe
 
 :end</Command>
     </PreBuildEvent>
+    <ResourceCompile />
+    <ResourceCompile />
+    <ResourceCompile>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;SCRIPTX_LANG_JAVASCRIPT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

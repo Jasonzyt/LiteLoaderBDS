@@ -1,4 +1,4 @@
-﻿#include <MC/Minecraft.hpp>
+#include <MC/Minecraft.hpp>
 
 #include <MC/Actor.hpp>
 #include <MC/Mob.hpp>
@@ -35,6 +35,10 @@
 #include <Impl/FormPacketHelper.h>
 #include <EventAPI.h>
 #include <bitset>
+#include <MC/ItemStackDescriptor.hpp>
+#include <MC/NetworkItemStackDescriptor.hpp>
+
+extern Logger logger;
 
 NetworkIdentifier* Player::getNetworkIdentifier() 
 {
@@ -54,7 +58,7 @@ Certificate* Player::getCertificate()
 std::string Player::getRealName() 
 {
     if (isSimulatedPlayer())
-        return getName();
+        return dAccess<std::string>(this, 2232);
     return ExtendedCertificate::getIdentityName(*getCertificate());
 }
 
@@ -67,16 +71,25 @@ int Player::getAvgPing()
 
 int Player::getLastPing() 
 {
+    if (isSimulatedPlayer())
+        return -1;
     return Global<Minecraft>->getNetworkHandler().getPeerForUser(*getNetworkIdentifier())->getNetworkStatus().ping;
 }
 
 string Player::getIP()
 {
+    if (isSimulatedPlayer())
+        return "127.0.0.1";
     return getNetworkIdentifier()->getIP();
 }
 
-string Player::getLanguageCode() 
+#include <MC/Localization.hpp>
+string Player::getLanguageCode()
 {
+    if (isSimulatedPlayer())
+    {
+        return I18n::getCurrentLanguage()->getFullLanguageCode();
+    }
     auto map = Global<ServerNetworkHandler>->fetchConnectionRequest(*getNetworkIdentifier()).rawToken.get()->dataInfo.value_.map_;
     for (auto & iter : *map) 
     {
@@ -177,16 +190,18 @@ int Player::clearItem(string typeName)
     ItemStack* item = getHandSlot();
     if (item->getTypeName() == typeName) 
     {
+        auto out = item->getCount();
         item->setNull();
-        ++res;
+        res += out;
     }
 
     //OffHand
     item = (ItemStack*)&getOffhandSlot();
     if (item->getTypeName() == typeName) 
     {
+        auto out = item->getCount();
         item->setNull();
-        ++res;
+        res += out;
     }
 
     //Inventory
@@ -228,7 +243,7 @@ bool Player::runcmd(const string& cmd)
 
 Container* Player::getEnderChestContainer() 
 {
-    return dAccess<Container*>(this, 4184);//IDA Player::Player() 782
+    return dAccess<Container*>(this, 4192); // IDA Player::Player() 782
 }
 
 bool Player::transferServer(const string& address, unsigned short port)
@@ -269,7 +284,7 @@ bool Player::refreshAttributes(std::vector<Attribute const*> const& attributes)
 {
     BinaryStream wp;
     wp.writeUnsignedVarInt64(getRuntimeID()); // EntityId
-    wp.writeUnsignedVarInt(attributes.size());
+    wp.writeUnsignedVarInt((unsigned)attributes.size());
     for (auto attribute : attributes)
     {
         auto& instance = getAttribute(*attribute);
@@ -318,9 +333,14 @@ int Player::getDeviceType()
     return getPlatform();
 }
 
-bool Player::isOP()
+bool Player::isOperator()
 {
     return (int)getPlayerPermissionLevel() >= 2;
+}
+
+bool Player::isOP()
+{
+    return isOperator();
 }
 
 bool Player::crashClient() 
@@ -380,7 +400,6 @@ bool Player::deleteScore(const string& key)
 ////////////////////////// Packet //////////////////////////
 
 static_assert(sizeof(TextPacket) == 216);
-static_assert(sizeof(PlaySoundPacket) == 152);
 static_assert(sizeof(TransferPacket) == 88);
 
 bool Player::sendTextPacket(string text, TextType Type) const
@@ -397,6 +416,7 @@ bool Player::sendTextPacket(string text, TextType Type) const
         case TextType::RAW:
         case TextType::TIP:
         case TextType::SYSTEM:
+        case TextType::JSON_WHISPER:
         case TextType::JSON:
             wp.writeString(text);
             break;
@@ -404,9 +424,7 @@ bool Player::sendTextPacket(string text, TextType Type) const
         case TextType::POPUP:
         case TextType::JUKEBOX_POPUP:
             wp.writeString(text);
-            wp.writeVarInt(0);
-            break;
-        case TextType::JSON_WHISPER:
+            wp.writeUnsignedVarInt(0);
             break;
     }
     wp.writeString("");
@@ -443,9 +461,10 @@ bool Player::sendNotePacket(unsigned int tone)
     }
     BinaryStream wp;
     wp.writeUnsignedChar(82);
-    wp.writeFloat(getPos().x);
-    wp.writeFloat(getPos().y);
-    wp.writeFloat(getPos().z);
+    auto& PlayerPos = getPosition();
+    wp.writeFloat(PlayerPos.x);
+    wp.writeFloat(PlayerPos.y);
+    wp.writeFloat(PlayerPos.z);
     wp.writeVarInt(tone * 2);
     wp.writeString("");
     wp.writeBool(false);
@@ -483,8 +502,6 @@ bool Player::sendPlaySoundPacket(string SoundName, Vec3 Position, float Volume, 
 }
 
 // Bad?
-#include <MC/ItemStackDescriptor.hpp>
-#include <MC/NetworkItemStackDescriptor.hpp>
 bool Player::sendAddItemEntityPacket(unsigned long long runtimeID, Item const& item, int stackSize, short aux, Vec3 pos, vector<std::unique_ptr<DataItem>> dataItems) const
 {
     BinaryStream wp;
@@ -645,11 +662,33 @@ bool Player::sendCommandRequestPacket(const string& cmd)
 
 bool Player::sendTextTalkPacket(const string& msg) 
 {
-    auto packet = MinecraftPackets::createPacket(0x09);
-    dAccess<unsigned char, 48>(packet.get()) = 1;
-    dAccess<string, 56>(packet.get()) = "";
-    dAccess<string, 88>(packet.get()) = msg;
-    Global<ServerNetworkHandler>->handle(*getNetworkIdentifier(), *((TextPacket*)packet.get()));
+    return sendTextTalkPacket(msg, nullptr);
+}
+#include <Utils/DbgHelper.h>
+bool Player::sendTextTalkPacket(const string& msg, Player* target)
+{
+    auto packet = TextPacket::createChat(getName(), msg, getXuid(), "");
+    if (target == nullptr)
+    {
+        Global<ServerNetworkHandler>->handle(*getNetworkIdentifier(), packet);
+        return true;
+    }
+    try
+    {
+        Event::PlayerChatEvent ev;
+        ev.mMessage = msg;
+        ev.mPlayer = this;
+        if (!ev.call())
+            return false;
+    }
+    catch (...)
+    {
+        logger.error("Event Callback Failed!");
+        logger.error("Uncaught Exception Detected!");
+        logger.error("In Event: PlayerChatEvent");
+        PrintCurrentStackTraceback();
+    }
+    target->sendNetworkPacket(packet);
     return true;
 }
 
@@ -668,28 +707,26 @@ bool Player::sendRawFormPacket(unsigned formId, const string& data) const
 
 bool Player::sendSimpleForm(const string& title, const string& content, const vector<string>& buttons, const std::vector<std::string>& images, std::function<void(Player*, int)> callback) const
 {
-    string model = u8R"({"title": "%s","content":"%s","buttons":%s,"type":"form"})";
-    model = model.replace(model.find("%s"), 2, title);
-    model = model.replace(model.find("%s"), 2, content);
-
-    fifo_json buttonText;
+    nlohmann::json model = R"({"title": "","content":"","buttons":[],"type":"form"})"_json;
+    model["title"] = title;
+    model["content"] = content;
     for (int i = 0; i < buttons.size(); ++i)
     {
-        fifo_json oneButton;
+        nlohmann::json oneButton = "{}"_json;
         oneButton["text"] = buttons[i];
         if (!images[i].empty())
         {
-            fifo_json image;
+            nlohmann::json image = "{}"_json;
             image["type"] = images[i].find("textures/") == 0 ? "path" : "url";
             image["data"] = images[i];
             oneButton["image"] = image;
         }
-        buttonText.push_back(oneButton);
+        model["buttons"].push_back(oneButton);
     }
-    model = model.replace(model.find("%s"), 2, buttonText.dump());
+    std::string data = model.dump();
 
     unsigned formId = NewFormId();
-    if (!sendRawFormPacket(formId, model))
+    if (!sendRawFormPacket(formId, data))
         return false;
     SetSimpleFormPacketCallback(formId, callback);
     return true;
@@ -697,14 +734,14 @@ bool Player::sendSimpleForm(const string& title, const string& content, const ve
 
 bool Player::sendModalForm(const string& title, const string& content, const string& button1, const string& button2, std::function<void(Player*, bool)> callback) const
 {
-    string model = R"({"title":"%s","content":"%s","button1":"%s","button2":"%s","type":"modal"})";
-    model = model.replace(model.find("%s"), 2, title);
-    model = model.replace(model.find("%s"), 2, content);
-    model = model.replace(model.find("%s"), 2, button1);
-    model = model.replace(model.find("%s"), 2, button2);
-
+    nlohmann::json model = R"({"title":"","content":"","button1":"","button2":"","type":"modal"})"_json;
+    model["title"] = title;
+    model["content"] = content;
+    model["button1"] = button1;
+    model["button2"] = button2;
+    std::string data = model.dump();
     unsigned formId = NewFormId();
-    if (!sendRawFormPacket(formId, model))
+    if (!sendRawFormPacket(formId, data))
         return false;
     SetModalFormPacketCallback(formId, callback);
     return true;
@@ -732,19 +769,49 @@ bool Player::isValid(Player* player)
 bool Player::sendSimpleFormPacket(const string& title, const string& content, const vector<string>& buttons, const std::vector<std::string>& images, std::function<void(int)> callback) const
 {
     return sendSimpleForm(title, content, buttons, images, [callback](Player* pl, int id) {
-        callback(id);
+        if (!callback || !Player::isValid(pl))
+            return;
+        try
+        {
+            callback(id);
+        }
+        catch (...)
+        {
+            logger.error("Exception occurred in custom-form packet callback!");
+            logger.error("Player: {}", pl->getName());
+        }
     });
 }
 bool Player::sendModalFormPacket(const string& title, const string& content, const string& button1, const string& button2, std::function<void(bool)> callback)
 {
     return sendModalForm(title,content,button1,button2, [callback](Player* pl, bool res) {
-        callback(res);
+        if (!callback || !Player::isValid(pl))
+            return;
+        try
+        {
+            callback(res);
+        }
+        catch (...)
+        {
+            logger.error("Exception occurred in modal-form packet callback!");
+            logger.error("Player: {}", pl->getName());
+        }
     });
 }
 
 bool Player::sendCustomFormPacket(const std::string& data, std::function<void(string)> callback)
 {
     return sendCustomForm(data, [callback](Player* pl, string res) {
-        callback(res);
+        if (!callback || !Player::isValid(pl))
+            return;
+        try
+        {
+            callback(res);
+        }
+        catch (...)
+        {
+            logger.error("Exception occurred in custom-form packet callback!");
+            logger.error("Player: {}", pl->getName());
+        }
     });
 }

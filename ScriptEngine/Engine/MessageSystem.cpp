@@ -1,8 +1,11 @@
 #include "MessageSystem.h"
 #include <API/APIHelp.h>
 #include <Tools/Utils.h>
+#include <LLAPI.h>
+#include <EventAPI.h>
 #include "LocalShareData.h"
 #include "GlobalShareData.h"
+#include <processthreadsapi.h>
 #include <process.h>
 #include <exception>
 using namespace std;
@@ -96,7 +99,8 @@ ModuleMessageResult ModuleMessage::broadcastLocal(MessageType type, string data,
     std::vector<ScriptEngine*> engineList;
     int msgId = -1;
 
-    for (auto& engine : currentModuleEngines)
+    auto engines = EngineManager::getLocalEngines();
+    for (auto& engine : engines)
     {
         try
         {
@@ -124,24 +128,25 @@ ModuleMessageResult ModuleMessage::broadcastGlobal(MessageType type, string data
     std::vector<ScriptEngine*> engineList;
     int msgId = -1;
 
-    for (auto& engineData : globalShareData->engines)
+    auto engines = EngineManager::getGlobalEngines();
+    for (auto& engine : engines)
     {
         try
         {
-            engineData.engine->messageQueue()->postMessage(PackEngineMessage(engineData.moduleType, type, data, &msgId),
+            engine->messageQueue()->postMessage(PackEngineMessage(EngineManager::getEngineType(engine), type, data, &msgId),
                 std::chrono::milliseconds(delay));
-            engineList.push_back(engineData.engine);
+            engineList.push_back(engine);
         }
         catch (const Exception& e)
         {
-            EngineScope scope(engineData.engine);
-            logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engineData.engine)->pluginName);
+            EngineScope scope(engine);
+            logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engine)->pluginName);
             PrintException(e);
         }
         catch (...)
         {
-            EngineScope scope(engineData.engine);
-            logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engineData.engine)->pluginName);
+            EngineScope scope(engine);
+            logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engine)->pluginName);
         }
     }
     return ModuleMessageResult(msgId, engineList);
@@ -152,26 +157,27 @@ ModuleMessageResult ModuleMessage::broadcastTo(std::string toModuleType, Message
     std::vector<ScriptEngine*> engineList;
     int msgId = -1;
 
-    for (auto& engineData : globalShareData->engines)
+    auto engines = EngineManager::getGlobalEngines();
+    for (auto& engine : engines)
     {
-        if (engineData.moduleType == toModuleType)
+        if (EngineManager::getEngineType(engine) == toModuleType)
         {
             try
             {
-                engineData.engine->messageQueue()->postMessage(PackEngineMessage(toModuleType, type, data, &msgId),
+                engine->messageQueue()->postMessage(PackEngineMessage(toModuleType, type, data, &msgId),
                     std::chrono::milliseconds(delay));
-                engineList.push_back(engineData.engine);
+                engineList.push_back(engine);
             }
             catch (const Exception& e)
             {
-                EngineScope scope(engineData.engine);
-                logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engineData.engine)->pluginName);
+                EngineScope scope(engine);
+                logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engine)->pluginName);
                 PrintException(e);
             }
             catch (...)
             {
-                EngineScope scope(engineData.engine);
-                logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engineData.engine)->pluginName);
+                EngineScope scope(engine);
+                logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engine)->pluginName);
             }
         }
     }
@@ -185,15 +191,7 @@ ModuleMessageResult ModuleMessage::sendTo(ScriptEngine* engine, MessageType type
 
     try
     {
-        for (auto& engineData : globalShareData->engines)
-        {
-            if (engineData.engine == engine)
-            {
-                toModuleType = engineData.moduleType;
-                break;
-            }
-        }
-        engine->messageQueue()->postMessage(PackEngineMessage(toModuleType, type, data, &msgId),
+        engine->messageQueue()->postMessage(PackEngineMessage(EngineManager::getEngineType(engine), type, data, &msgId),
             std::chrono::milliseconds(delay));
         return ModuleMessageResult(msgId, { engine });
     }
@@ -215,26 +213,27 @@ ModuleMessageResult ModuleMessage::sendToRandom(std::string toModuleType, Messag
 {
     int msgId = -1;
 
-    for (auto& engineData : globalShareData->engines)
+    auto engines = EngineManager::getGlobalEngines();
+    for (auto& engine : engines)
     {
-        if (engineData.moduleType == toModuleType)
+        if (EngineManager::getEngineType(engine) == toModuleType)
         {
             try
             {
-                engineData.engine->messageQueue()->postMessage(PackEngineMessage(toModuleType, type, data, &msgId),
+                engine->messageQueue()->postMessage(PackEngineMessage(toModuleType, type, data, &msgId),
                     std::chrono::milliseconds(delay));
-                return ModuleMessageResult(msgId, {engineData.engine});
+                return ModuleMessageResult(msgId, {engine});
             }
             catch (const Exception& e)
             {
-                EngineScope scope(engineData.engine);
-                logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engineData.engine)->pluginName);
+                EngineScope scope(engine);
+                logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engine)->pluginName);
                 PrintException(e);
             }
             catch (...)
             {
-                EngineScope scope(engineData.engine);
-                logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engineData.engine)->pluginName);
+                EngineScope scope(engine);
+                logger.error("Fail to post message to plugin {}", ENGINE_GET_DATA(engine)->pluginName);
             }
         }
     }
@@ -284,12 +283,12 @@ ModuleMessageResult::~ModuleMessageResult()
 
 bool ModuleMessageResult::waitForAllResults(int maxWaitTime)
 {
-    return waitForResultCount(getSentCount());
+    return waitForResultCount(getSentCount(), maxWaitTime);
 }
 
 bool ModuleMessageResult::waitForOneResult(int maxWaitTime)
 {
-    return waitForResultCount(1);
+    return waitForResultCount(1, maxWaitTime);
 }
 
 bool ModuleMessageResult::waitForResultCount(int targetCount, int maxWaitTime)
@@ -325,30 +324,46 @@ bool ModuleMessageResult::cancel()
     return true;
 }
 
-
 ///////////////////////////// Funcs /////////////////////////////
 void MessageSystemLoopOnce()
 {
-    for (auto engine : currentModuleEngines)
+    //if (!messageLoopLock.try_lock())
+    //    return;
+    std::list<ScriptEngine*> tmpList;
     {
-        try
+        SRWLockSharedHolder lock(globalShareData->engineListLock);
+        // low efficiency
+        tmpList = globalShareData->globalEngineList;
+    }
+    for (auto engine : tmpList)
+    {
+        if (EngineManager::isValid(engine) && EngineManager::getEngineType(engine) == LLSE_BACKEND_TYPE)
         {
-            EngineScope enter(engine);
-            engine->messageQueue()->loopQueue(script::utils::MessageQueue::LoopType::kLoopOnce);
-        }
-        catch (const Exception& e)
-        {
-            EngineScope scope(engine);
-            logger.error("Error occurred in Engine Message Loop!");
-            logger.error("Uncaught Script Exception Detected!");
-            PrintException(e);
-        }
-        catch (...)
-        {
-            logger.error("Error occurred in Engine Message Loop!");
-            logger.error("Uncaught Exception Detected!");
+            try
+            {
+                if (EngineScope::currentEngine() == engine)
+                    engine->messageQueue()->loopQueue(script::utils::MessageQueue::LoopType::kLoopOnce);
+                else
+                {
+                    EngineScope enter(engine);
+                    engine->messageQueue()->loopQueue(script::utils::MessageQueue::LoopType::kLoopOnce);
+                }
+            }
+            catch (const Exception& e)
+            {
+                EngineScope scope(engine);
+                logger.error("Error occurred in Engine Message Loop!");
+                logger.error("Uncaught Script Exception Detected!");
+                PrintException(e);
+            }
+            catch (...)
+            {
+                logger.error("Error occurred in Engine Message Loop!");
+                logger.error("Uncaught Exception Detected!");
+            }
         }
     }
+    //messageLoopLock.unlock();
     //logger.debug("Engine-{} Message Loop.", LLSE_MODULE_TYPE);
 }
 
@@ -356,11 +371,46 @@ void InitMessageSystem()
 {
     globalShareData->messageSystemHandlers[LLSE_MODULE_TYPE] = { ModuleMessage::handle, ModuleMessage::cleanup };
 
+    Event::ServerStoppedEvent::subscribe([](const auto& ev) {
+        EndMessageSystemLoop();
+        return true;
+    });
+
+    // dangerous?
     std::thread([]() {
+#ifdef DEBUG
+        SetThreadDescription(GetCurrentThread(), L"LLSE MessageSystem " _CRT_WIDE(LLSE_MODULE_TYPE));
+#endif // DEBUG
+        // Set global SEH-Exception handler
+        _set_se_translator(seh_exception::TranslateSEHtoCE);
+
+        globalShareData->messageThreads[LLSE_BACKEND_TYPE] = GetCurrentThread();
         while (true)
         {
             MessageSystemLoopOnce();
-            Sleep(1);
+            if (LL::getServerStatus() >= LL::ServerStatus::Stopping)
+                return;
+            SleepEx(5, true);
+            if (LL::getServerStatus() >= LL::ServerStatus::Stopping)
+                return;
         }
     }).detach();
+}
+
+//Helper
+void APCEmptyHelper(ULONG_PTR)
+{
+    ;
+}
+
+bool EndMessageSystemLoop()
+{
+    auto res = globalShareData->messageThreads.find(LLSE_BACKEND_TYPE);
+    if (res == globalShareData->messageThreads.end())
+        return false;
+
+    QueueUserAPC(APCEmptyHelper, res->second, 0);
+    globalShareData->messageThreads.erase(LLSE_BACKEND_TYPE);
+    Sleep(1);
+    return true;
 }

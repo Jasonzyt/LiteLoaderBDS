@@ -9,6 +9,7 @@
 class ReadOnlyBinaryStream;
 class BinaryStream;
 class ServerPlayer;
+class NetworkIdentifier;
 enum StreamReadResult;
 enum class PacketReliability {
     Relible,
@@ -54,8 +55,8 @@ protected:
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_PACKET
 public:
-    class Packet& operator=(class Packet const&) = delete;
-    Packet(class Packet const&) = delete;
+    class Packet& operator=(class Packet const &) = delete;
+    Packet(class Packet const &) = delete;
     Packet() = delete;
 #endif
 
@@ -63,10 +64,10 @@ public:
     /*0*/ virtual ~Packet();
     /*1*/ virtual enum MinecraftPacketIds getId() const = 0;
     /*2*/ virtual std::string getName() const = 0;
-    /*3*/ virtual void write(class BinaryStream&) const = 0;
-    /*4*/ virtual struct ExtendedStreamReadResult readExtended(class ReadOnlyBinaryStream&);
+    /*3*/ virtual void write(class BinaryStream &) const = 0;
+    /*4*/ virtual struct ExtendedStreamReadResult readExtended(class ReadOnlyBinaryStream &);
     /*5*/ virtual bool disallowBatching() const;
-    /*6*/ virtual enum StreamReadResult _read(class ReadOnlyBinaryStream&) = 0;
+    /*6*/ virtual enum StreamReadResult _read(class ReadOnlyBinaryStream &) = 0;
     /*
     inline  ~Packet(){
          (Packet::*rv)();
@@ -74,6 +75,9 @@ public:
         return (this->*rv)();
     }
     */
+    MCAPI void handle(class NetworkIdentifier const &, class NetEventCallback &, class std::shared_ptr<class Packet> &);
+    MCAPI bool readNoHeader(class ReadOnlyBinaryStream &, unsigned char const &, struct ExtendedStreamReadResult &);
+    MCAPI void writeWithHeader(unsigned char, class BinaryStream &) const;
 
 protected:
 

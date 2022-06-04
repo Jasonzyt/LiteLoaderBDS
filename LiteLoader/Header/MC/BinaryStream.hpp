@@ -19,10 +19,7 @@ public:
     LIAPI void reserve(size_t size);
     LIAPI std::string& getRaw();
     template <typename T>
-    inline void writeType(T const&)
-    {
-        static_assert(false, "Unsupported Type");
-    };
+    inline void writeType(T const&) = delete;
     template <>
     MCAPI void writeType(struct CommandOriginData const&);
     template <>
@@ -46,14 +43,15 @@ public:
         writeFloat(vec3.y);
         writeFloat(vec3.z);
     }
+    LIAPI void writeCompoundTag(class CompoundTag const& tag);
 
 
 #undef AFTER_EXTRA
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_BINARYSTREAM
 public:
-    class BinaryStream& operator=(class BinaryStream const&) = delete;
-    BinaryStream(class BinaryStream const&) = delete;
+    class BinaryStream& operator=(class BinaryStream const &) = delete;
+    BinaryStream(class BinaryStream const &) = delete;
 #endif
 
 public:
@@ -65,7 +63,7 @@ public:
         return (this->*rv)();
     }
     */
-    MCAPI BinaryStream(std::string&, bool);
+    MCAPI BinaryStream(std::string &, bool);
     MCAPI BinaryStream();
     MCAPI std::string getAndReleaseData();
     MCAPI void reset();
@@ -90,6 +88,6 @@ public:
 protected:
 
 private:
-    MCAPI void write(void const*, unsigned __int64);
+    MCAPI void write(void const *, unsigned __int64);
 
 };

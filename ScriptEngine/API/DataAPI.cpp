@@ -1,5 +1,6 @@
 #include "APIHelp.h"
 #include "DataAPI.h"
+#include "DatabaseAPI.h"
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -11,7 +12,7 @@
 #include <Utils/StringHelper.h>
 #include <Tools/JsonHelper.h>
 #include <EconomicSystem.h>
-#include <third-party/cpp-base64/base64.h>
+#include <cpp-base64/base64.h>
 using namespace std;
 
 
@@ -28,7 +29,7 @@ ClassDefine<void> DataClassBuilder =
         .function("toBase64", &DataClass::toBase64)
         .function("fromBase64", &DataClass::fromBase64)
 
-        //For Compatibility
+        // For Compatibility
         .function("openDB", &DataClass::openDB)
         .function("openConfig", &DataClass::openConfig)
         .build();
@@ -42,16 +43,6 @@ ClassDefine<void> MoneyClassBuilder =
         .function("trans", &MoneyClass::trans)
         .function("getHistory", &MoneyClass::getHistory)
         .function("clearHistory", &MoneyClass::clearHistory)
-        .build();
-
-ClassDefine<DbClass> DbClassBuilder =
-    defineClass<DbClass>("KVDatabase")
-        .constructor(&DbClass::constructor)
-        .instanceFunction("get", &DbClass::get)
-        .instanceFunction("set", &DbClass::set)
-        .instanceFunction("delete", &DbClass::del)
-        .instanceFunction("close", &DbClass::close)
-        .instanceFunction("listKey", &DbClass::listKey)
         .build();
 
 ClassDefine<ConfJsonClass> ConfJsonClassBuilder =
@@ -86,117 +77,10 @@ ClassDefine<ConfIniClass> ConfIniClassBuilder =
         .build();
 
 
-//////////////////// Classes Db ////////////////////
-
-//生成函数
-DbClass::DbClass(const Local<Object>& scriptObj, const string &dir)
-    :ScriptClass(scriptObj),kvdb(KVDB::create(dir))
-{ }
-
-DbClass::DbClass(const string& dir)
-    : ScriptClass(script::ScriptClass::ConstructFromCpp<DbClass>{}), kvdb(KVDB::create(dir))
-{ }
-
-DbClass::~DbClass()
-{ }
-
-DbClass* DbClass::constructor(const Arguments& args)
-{
-    CHECK_ARGS_COUNT_C(args, 1);
-    CHECK_ARG_TYPE_C(args[0], ValueKind::kString);
-
-    try {
-        auto res = new DbClass(args.thiz(), args[0].toStr());
-        if (res->isValid())
-            return res;
-        else
-            return nullptr;
-    }
-    CATCH_C("Fail in Open Database!");
-}
-
-Local<Value> DbClass::get(const Arguments& args)
-{
-    CHECK_ARGS_COUNT(args, 1);
-    CHECK_ARG_TYPE(args[0], ValueKind::kString);
-
-    try
-    {
-        if (!isValid())
-            return Local<Value>();
-
-        string res;
-        if(!kvdb->get(args[0].asString().toString(), res))
-            return Local<Value>();
-        
-        return JsonToValue(res);
-    }
-    CATCH("Fail in DbGet!")
-}
-
-Local<Value> DbClass::set(const Arguments& args)
-{
-    CHECK_ARGS_COUNT(args, 2);
-    CHECK_ARG_TYPE(args[0], ValueKind::kString);
-
-    try
-    {
-        if (!isValid())
-            return Local<Value>();
-
-        kvdb->put(args[0].asString().toString(), ValueToJson(args[1]));
-        return Boolean::newBoolean(true);
-    }
-    CATCH("Fail in DbSet!")
-}
-
-Local<Value> DbClass::del(const Arguments& args)
-{
-    CHECK_ARGS_COUNT(args, 1);
-    CHECK_ARG_TYPE(args[0], ValueKind::kString);
-
-    try
-    {
-        if (!isValid())
-            return Local<Value>();
-
-        return Boolean::newBoolean(kvdb->del(args[0].asString().toString()));
-    }
-    CATCH("Fail in DbDel!")
-}
-
-Local<Value> DbClass::close(const Arguments& args)
-{
-    try
-    {
-        return Boolean::newBoolean(true);
-    }
-    CATCH("Fail in DbClose!")
-}
-
-Local<Value> DbClass::listKey(const Arguments& args)
-{
-    try
-    {
-        if (!isValid())
-            return Local<Value>();
-
-        auto list = kvdb->getAllKeys();
-        Local<Array> arr = Array::newArray();
-        for (auto& key : list)
-        {
-            arr.add(String::newString(key));
-        }
-        return arr;
-    }
-    CATCH("Fail in DbListKey!")
-}
-
-
 //////////////////// Classes ConfBase ////////////////////
 
 ConfBaseClass::ConfBaseClass(const string& dir)
-    :confPath(dir)
+    : confPath(dir)
 { }
 
 Local<Value> ConfBaseClass::getPath(const Arguments& args)
@@ -223,15 +107,15 @@ Local<Value> ConfBaseClass::read(const Arguments& args)
 
 //////////////////// Classes ConfJson ////////////////////
 
-//生成函数
+// 生成函数
 ConfJsonClass::ConfJsonClass(const Local<Object>& scriptObj, const string& path, const string& defContent)
-    :ScriptClass(scriptObj), ConfBaseClass(path)
+    : ScriptClass(scriptObj), ConfBaseClass(path)
 {
     jsonConf = CreateJson(path, defContent);
 }
 
 ConfJsonClass::ConfJsonClass(const string& path, const string& defContent)
-    :ScriptClass(ScriptClass::ConstructFromCpp<ConfJsonClass>{}), ConfBaseClass(path)
+    : ScriptClass(ScriptClass::ConstructFromCpp<ConfJsonClass>{}), ConfBaseClass(path)
 {
     jsonConf = CreateJson(path, defContent);
 }
@@ -350,7 +234,7 @@ Local<Value> ConfJsonClass::reload(const Arguments& args)
     catch (const fifo_json::exception& e)
     {
         logger.error("Fail to parse json content in file!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     CATCH("Fail in confJsonReload!");
@@ -404,22 +288,22 @@ bool ConfJsonClass::reload()
     if (!jsonTexts)
         return false;
 
-    jsonConf = fifo_json::parse(*jsonTexts);
+    jsonConf = fifo_json::parse(*jsonTexts, nullptr, true, true);
     return true;
 }
 
 
 //////////////////// Classes ConfIni ////////////////////
 
-//生成函数
+// 生成函数
 ConfIniClass::ConfIniClass(const Local<Object>& scriptObj, const string& path, const string& defContent)
-    :ScriptClass(scriptObj), ConfBaseClass(path)
+    : ScriptClass(scriptObj), ConfBaseClass(path)
 {
     iniConf = SimpleIni::create(path, defContent);
 }
 
 ConfIniClass::ConfIniClass(const string& path, const string& defContent)
-    :ScriptClass(ScriptClass::ConstructFromCpp<ConfIniClass>{}), ConfBaseClass(path)
+    : ScriptClass(ScriptClass::ConstructFromCpp<ConfIniClass>{}), ConfBaseClass(path)
 {
     iniConf = SimpleIni::create(path, defContent);
 }
@@ -507,7 +391,7 @@ Local<Value> ConfIniClass::init(const Arguments& args)
         {
             if (CheckIsFloat(args[2]))
             {
-                //Float
+                // Float
                 float def = args[2].asNumber().toFloat();
                 float data = iniConf->getFloat(section, key, def);
                 if (data == def)
@@ -519,7 +403,7 @@ Local<Value> ConfIniClass::init(const Arguments& args)
             }
             else
             {
-                //Int
+                // Int
                 int def = args[2].toInt();
                 int data = iniConf->getInt(section, key, def);
                 if (data == def)
@@ -733,13 +617,13 @@ Local<Value> MoneyClass::set(const Arguments& args)
     catch (const std::invalid_argument& e)
     {
         logger.error("Bad argument in MoneySet!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     catch (const std::out_of_range& e)
     {
         logger.error("Bad argument in MoneySet!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     CATCH("Fail in MoneySet!");
@@ -757,13 +641,13 @@ Local<Value> MoneyClass::get(const Arguments& args)
     catch (const std::invalid_argument& e)
     {
         logger.error("Bad argument in MoneyGet!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Number::newNumber(0);
     }
     catch (const std::out_of_range& e)
     {
         logger.error("Bad argument in MoneyGet!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Number::newNumber(0);
     }
     CATCH("Fail in MoneyGet!");
@@ -782,13 +666,13 @@ Local<Value> MoneyClass::add(const Arguments& args)
     catch (const std::invalid_argument& e)
     {
         logger.error("Bad argument in MoneyAdd!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     catch (const std::out_of_range& e)
     {
         logger.error("Bad argument in MoneyAdd!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     CATCH("Fail in MoneyAdd!");
@@ -807,13 +691,13 @@ Local<Value> MoneyClass::reduce(const Arguments& args)
     catch (const std::invalid_argument& e)
     {
         logger.error("Bad argument in MoneyReduce!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     catch (const std::out_of_range& e)
     {
         logger.error("Bad argument in MoneyReduce!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     CATCH("Fail in MoneyReduce!");
@@ -837,13 +721,13 @@ Local<Value> MoneyClass::trans(const Arguments& args)
     catch (const std::invalid_argument& e)
     {
         logger.error("Bad argument in MoneyTrans!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     catch (const std::out_of_range& e)
     {
         logger.error("Bad argument in MoneyTrans!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Boolean::newBoolean(false);
     }
     CATCH("Fail in MoneyTrans!");
@@ -898,13 +782,13 @@ Local<Value> MoneyClass::getHistory(const Arguments& args)
     catch (const std::invalid_argument& e)
     {
         logger.error("Bad argument in MoneyGetHintory!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Local<Value>();
     }
     catch (const std::out_of_range& e)
     {
         logger.error("Bad argument in MoneyGetHintory!");
-        logger.error(e.what());
+        logger.error(TextEncoding::toUTF8(e.what()));
         return Local<Value>();
     }
     CATCH("Fail in MoneyGetHintory!");
@@ -1069,17 +953,31 @@ Local<Value> DataClass::fromBase64(const Arguments& args)
     CHECK_ARG_TYPE(args[0], ValueKind::kString);
 
     try {
-        return String::newString(base64_decode(args[0].toStr()));
+        bool isBinary = false;
+        if (args.size() > 1)
+        {
+            CHECK_ARG_TYPE(args[1], ValueKind::kBoolean);
+            isBinary = args[1].asBoolean().value();
+        }
+        auto data = base64_decode(args[0].toStr());
+        if (isBinary)
+        {
+            return ByteBuffer::newByteBuffer((void*)data.c_str(), data.size());
+        }
+        else
+        {
+            return String::newString(data);
+        }
     }
     CATCH("Fail in FromBase64!");
 }
 
 
-//For Compability
+// For Compability
 
-Local<Value> DbClass::newDb(const string& dir)
+Local<Value> KVDBClass::newDb(const string& dir)
 {
-    auto newp = new DbClass(dir);
+    auto newp = new KVDBClass(dir);
 
     if (newp->isValid())
         return newp->getScriptObject();
@@ -1154,5 +1052,5 @@ Local<Value> DataClass::openDB(const Arguments& args)
     CHECK_ARGS_COUNT(args, 1);
     CHECK_ARG_TYPE(args[0], ValueKind::kString);
 
-    return DbClass::newDb(args[0].toStr());
+    return KVDBClass::newDb(args[0].toStr());
 }

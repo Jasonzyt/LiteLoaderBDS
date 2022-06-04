@@ -18,8 +18,8 @@ class KeyManager {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_KEYMANAGER
 public:
-    class KeyManager& operator=(class KeyManager const&) = delete;
-    KeyManager(class KeyManager const&) = delete;
+    class KeyManager& operator=(class KeyManager const &) = delete;
+    KeyManager(class KeyManager const &) = delete;
     KeyManager() = delete;
 #endif
 
@@ -33,8 +33,9 @@ public:
         return (this->*rv)();
     }
     */
-    MCAPI KeyManager(std::string const&, enum Crypto::Asymmetric::System);
+    MCAPI KeyManager(std::string const &, enum Crypto::Asymmetric::System);
     MCAPI std::string getPublicKey() const;
+    MCAPI bool verify(std::string const &, std::string const &, enum Crypto::Hash::HashType) const;
 
 protected:
 

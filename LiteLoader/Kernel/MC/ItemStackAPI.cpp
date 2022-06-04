@@ -4,6 +4,8 @@
 #include "MC/Spawner.hpp"
 #include "MC/Level.hpp"
 #include "MC/ItemInstance.hpp"
+#include "MC/I18n.hpp"
+#include "MC/PropertiesSettings.hpp"
 #include <MC/CompoundTag.hpp>
 #include <string>
 #include <utility>
@@ -11,14 +13,12 @@
 
 using namespace std;
 
-static_assert(sizeof(ItemStack) == 144);
+static_assert(sizeof(ItemStack) == 160);
 static_assert(sizeof(ItemInstance) == 136);
 
 ItemStack *ItemStack::create() {
     try {
-        auto *a = (ItemStack *) new char[sizeof(ItemStack)];
-        ItemStack *item = SymCall("??0ItemStack@@QEAA@XZ", ItemStack*, ItemStack*)(a);
-        return item;
+        return new ItemStack();
     } catch (...) {
         return nullptr;
     }
@@ -30,6 +30,15 @@ ItemStack *ItemStack::create(std::unique_ptr<CompoundTag> tag) {
         return nullptr;
     tag->setItemStack(item);
     return item;
+}
+
+#include <MC/ItemRegistry.hpp>
+ItemStack* ItemStack::create(short itemId, int aux,int count)
+{
+    auto item = ItemRegistry::getItem(itemId);
+    if (item)
+        return new ItemStack(*item, count, aux);
+    return nullptr;
 }
 
 ItemStack *ItemStack::create(std::string type, int count) {
@@ -102,3 +111,11 @@ int ItemStackBase::getCount() const
         return 0;
     return dAccess<unsigned char, 34>(this);
 }
+
+string ItemStack::getStandardName(const Localization& language)
+{
+    I18n::chooseLanguage(language);
+    string standardName = this->getItem()->buildDescriptionName(*this);
+    I18n::chooseLanguage(Global<PropertiesSettings>->getLanguage());
+    return (standardName);
+};

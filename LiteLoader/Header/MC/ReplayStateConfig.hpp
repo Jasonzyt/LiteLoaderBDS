@@ -15,13 +15,14 @@ struct ReplayStateConfig {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_REPLAYSTATECONFIG
 public:
-    struct ReplayStateConfig& operator=(struct ReplayStateConfig const&) = delete;
-    ReplayStateConfig(struct ReplayStateConfig const&) = delete;
+    struct ReplayStateConfig& operator=(struct ReplayStateConfig const &) = delete;
+    ReplayStateConfig(struct ReplayStateConfig const &) = delete;
     ReplayStateConfig() = delete;
 #endif
 
 public:
     MCAPI ReplayStateConfig(enum ReplayStateMode);
+    MCAPI bool usesUnsupportedThresholds() const;
 
 protected:
 

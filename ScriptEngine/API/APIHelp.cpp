@@ -18,6 +18,7 @@
 #include <API/NbtAPI.h>
 #include <API/GuiAPI.h>
 #include <API/DataAPI.h>
+#include <API/DatabaseAPI.h>
 #include <API/PlayerAPI.h>
 #include <Global.hpp>
 #include <Engine/EngineOwnData.h>
@@ -28,7 +29,7 @@ using namespace std;
 template <typename T>
 void PrintValue(T &out, Local<Value> v)
 {
-    switch(v.getKind())
+    switch (v.getKind())
     {
         case ValueKind::kString:
             out << v.asString().toString();
@@ -47,17 +48,17 @@ void PrintValue(T &out, Local<Value> v)
             break;
         case ValueKind::kArray:
         {
-            Local<Array> arr=v.asArray();
+            Local<Array> arr = v.asArray();
             if(arr.size() == 0)
                 out << "[]";
             else
             {
                 out << '[';
-                PrintValue(out,arr.get(0));
-                for(int i=1;i<arr.size();++i)
+                PrintValue(out, arr.get(0));
+                for(int i = 1; i<arr.size(); ++i)
                 {
                     out << ',';
-                    PrintValue(out,arr.get(i));
+                    PrintValue(out, arr.get(i));
                 }
                 out << ']';
             }
@@ -65,8 +66,8 @@ void PrintValue(T &out, Local<Value> v)
         }
         case ValueKind::kObject:
         {
-            //自定义类型也会被识别为Object，优先处理
-            //IntPos
+            // 自定义类型也会被识别为Object，优先处理
+            // IntPos
             IntPos* intpos = IntPos::extractPos(v);
             if (intpos != nullptr)
             {
@@ -74,7 +75,7 @@ void PrintValue(T &out, Local<Value> v)
                 break;
             }
 
-            //FloatPos
+            // FloatPos
             FloatPos* floatpos = FloatPos::extractPos(v);
             if (floatpos != nullptr)
             {
@@ -82,13 +83,13 @@ void PrintValue(T &out, Local<Value> v)
                 break;
             }
 
-            //其他自定义类型
+            // 其他自定义类型
             if (IsInstanceOf<BlockClass>(v))
             {
                 out << "<Block>";
                 break;
             }
-            if (IsInstanceOf<DbClass>(v))
+            if (IsInstanceOf<KVDBClass>(v))
             {
                 out << "<Database>";
                 break;
@@ -143,20 +144,28 @@ void PrintValue(T &out, Local<Value> v)
                 out << "<NbtClass>";
                 break;
             }
+            if (IsInstanceOf<DBSessionClass>(v))
+            {
+                out << "<DBSession>";
+            }
+            if (IsInstanceOf<DBStmtClass>(v))
+            {
+                out << "<DBStmt>";
+            }
 
             Local<Object> obj = v.asObject();
             std::vector<std::string> keys = obj.getKeyNames();
-            if(keys.empty())
+            if (keys.empty())
                 out << "{}";
             else
             {
                 out << '{';
                 out << keys[0]+":";
-                PrintValue(out,obj.get(keys[0]));
-                for(int i=1;i<keys.size();++i)
+                PrintValue(out, obj.get(keys[0]));
+                for(int i = 1; i < keys.size(); ++i)
                 {
-                    out << ","+keys[i]+":";
-                    PrintValue(out,obj.get(keys[i]));
+                    out << "," + keys[i] + ":";
+                    PrintValue(out, obj.get(keys[i]));
                 }
                 out << '}';
             }
@@ -344,12 +353,12 @@ Local<Value> JsonToValue(std::string jsonStr)
             return String::newString("");
         if (jsonStr.front() == '\"' && jsonStr.back() == '\"')
             return String::newString(jsonStr.substr(1,jsonStr.size()-2));
-        auto j = fifo_json::parse(jsonStr);
+        auto j = fifo_json::parse(jsonStr, nullptr, true, true);
         return JsonToValue(j);
     }
     catch (const fifo_json::exception &e)
     {
-        logger.warn(tr("api.parseJson.fail") + e.what());
+        logger.warn(tr("api.parseJson.fail") + TextEncoding::toUTF8(e.what()));
         return String::newString(jsonStr);
     }
 }
@@ -369,7 +378,7 @@ void ValueToJson_Arr_Helper(fifo_json &res, const Local<Array> &v)
             res.push_back(v.get(i).asString().toString());
             break;
         case ValueKind::kNumber:
-            if (CheckIsFloat(v))
+            if (CheckIsFloat(v.get(i)))
                 res.push_back(v.get(i).asNumber().toDouble());
             else
                 res.push_back(v.get(i).asNumber().toInt64());
@@ -424,7 +433,7 @@ void ValueToJson_Obj_Helper(fifo_json& res, const Local<Object>& v)
             res.push_back({ key,v.get(key).asString().toString() });
             break;
         case ValueKind::kNumber:
-            if (CheckIsFloat(v))
+            if (CheckIsFloat(v.get(key)))
                 res.push_back({ key,v.get(key).asNumber().toDouble() });
             else
                 res.push_back({ key,v.get(key).asNumber().toInt64() });
@@ -478,9 +487,13 @@ std::string ValueToJson(Local<Value> v,int formatIndent)
         break;
     case ValueKind::kNumber:
         if (CheckIsFloat(v))
+        {
             result = std::to_string(v.asNumber().toDouble());
+        }
         else
+        {
             result = std::to_string(v.asNumber().toInt64());
+        }
         break;
     case ValueKind::kBoolean:
         result = std::to_string(v.asBoolean().value());

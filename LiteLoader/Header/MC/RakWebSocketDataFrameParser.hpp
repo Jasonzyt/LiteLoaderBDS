@@ -18,18 +18,20 @@ class RakWebSocketDataFrameParser {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_RAKWEBSOCKETDATAFRAMEPARSER
 public:
-    class RakWebSocketDataFrameParser& operator=(class RakWebSocketDataFrameParser const&) = delete;
-    RakWebSocketDataFrameParser(class RakWebSocketDataFrameParser const&) = delete;
+    class RakWebSocketDataFrameParser& operator=(class RakWebSocketDataFrameParser const &) = delete;
+    RakWebSocketDataFrameParser(class RakWebSocketDataFrameParser const &) = delete;
     RakWebSocketDataFrameParser() = delete;
 #endif
 
 public:
-    MCAPI class std::shared_ptr<class RakWebSocketDataFrame> readFrame(class RakNet::BitStream&);
+    MCAPI RakWebSocketDataFrameParser(bool);
+    MCAPI class std::shared_ptr<class RakWebSocketDataFrame> readFrame(class RakNet::BitStream &);
+    MCAPI void setOnFailHandler(class std::function<void (std::string const &, enum CloseStatusCode)>);
     MCAPI ~RakWebSocketDataFrameParser();
 
 protected:
 
 private:
-    MCAPI class std::shared_ptr<class RakWebSocketDataFrame> _failReadFrame(std::string const&, enum CloseStatusCode);
+    MCAPI class std::shared_ptr<class RakWebSocketDataFrame> _failReadFrame(std::string const &, enum CloseStatusCode);
 
 };

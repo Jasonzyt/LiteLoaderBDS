@@ -17,12 +17,12 @@ struct ItemStackRequestHandlerSlotInfo {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_ITEMSTACKREQUESTHANDLERSLOTINFO
 public:
-    struct ItemStackRequestHandlerSlotInfo& operator=(struct ItemStackRequestHandlerSlotInfo const&) = delete;
-    ItemStackRequestHandlerSlotInfo(struct ItemStackRequestHandlerSlotInfo const&) = delete;
-    ItemStackRequestHandlerSlotInfo() = delete;
+    struct ItemStackRequestHandlerSlotInfo& operator=(struct ItemStackRequestHandlerSlotInfo const &) = delete;
+    ItemStackRequestHandlerSlotInfo(struct ItemStackRequestHandlerSlotInfo const &) = delete;
 #endif
 
 public:
+    MCAPI ItemStackRequestHandlerSlotInfo();
     MCAPI operator bool() const;
     MCAPI ~ItemStackRequestHandlerSlotInfo();
 

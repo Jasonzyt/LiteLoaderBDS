@@ -16,7 +16,7 @@ using namespace Form;
 //////////////////// Class Definition ////////////////////
 
 ClassDefine<SimpleFormClass> SimpleFormClassBuilder =
-    defineClass<SimpleFormClass>("LXL_SimpleForm")
+    defineClass<SimpleFormClass>("LLSE_SimpleForm")
         .constructor(nullptr)
         .instanceFunction("setTitle", &SimpleFormClass::setTitle)
         .instanceFunction("setContent", &SimpleFormClass::setContent)
@@ -24,7 +24,7 @@ ClassDefine<SimpleFormClass> SimpleFormClassBuilder =
         .build();
 
 ClassDefine<CustomFormClass> CustomFormClassBuilder =
-    defineClass<CustomFormClass>("LXL_CustomForm")
+    defineClass<CustomFormClass>("LLSE_CustomForm")
         .constructor(nullptr)
         .instanceFunction("setTitle", &CustomFormClass::setTitle)
         .instanceFunction("addLabel", &CustomFormClass::addLabel)
@@ -64,6 +64,13 @@ bool SimpleFormClass::sendForm(Form::SimpleForm* form, Player* player, script::L
         [engine{ EngineScope::currentEngine() }, callback{ std::move(callbackFunc) }]
         (Player* pl, int chosen)
         {
+            if (LL::isServerStopping())
+                return;
+            if (!EngineManager::isValid(engine))
+                return;
+            if (callback.isEmpty())
+                return;
+
             EngineScope scope(engine);
             try
             {
@@ -156,6 +163,13 @@ bool CustomFormClass::sendForm(Form::CustomForm* form, Player* player, script::L
         [engine{EngineScope::currentEngine()}, callback{std::move(callbackFunc)}]
     (Player* pl, string data)
     {
+        if (LL::isServerStopping())
+            return;
+        if (!EngineManager::isValid(engine))
+            return;
+        if (callback.isEmpty())
+            return;
+
         EngineScope scope(engine);
         try
         {
@@ -312,51 +326,4 @@ Local<Value> McClass::newSimpleForm(const Arguments& args)
 Local<Value> McClass::newCustomForm(const Arguments& args)
 {
     return CustomFormClass::newForm();
-}
-
-
-//表单回调
-bool CallFormCallback(Player* player, unsigned formId, const string& data)
-{
-    bool passToBDS = true;
-
-    try
-    {
-        for (auto engine : currentModuleEngines)
-        {
-            EngineScope enter(engine);
-            FormCallbackData callback;
-            try
-            {
-                callback = ENGINE_GET_DATA(engine)->formCallbacks.at(formId);
-            }
-            catch (...)
-            {
-                continue;
-            }
-
-            EngineScope scope(callback.engine);
-            Local<Value> res{};
-            try
-            {
-                res = callback.func.get().call({}, PlayerClass::newPlayer(player), JsonToValue(data));
-            }
-            catch (const Exception& e)
-            {
-                logger.error("Form Callback Failed!");
-                logger.error("In Plugin: " + ENGINE_OWN_DATA()->pluginName);
-                logger.error << e << ::Logger::endl;
-            }
-            if (res.isNull() || (res.isBoolean() && res.asBoolean().value() == false))
-                passToBDS = false;
-
-            ENGINE_OWN_DATA()->formCallbacks.erase(formId);
-        }
-    }
-    catch (...)
-    {
-        ;
-    }
-
-    return passToBDS;
 }

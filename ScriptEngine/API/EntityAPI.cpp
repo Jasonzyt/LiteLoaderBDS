@@ -18,7 +18,7 @@
 //////////////////// Class Definition ////////////////////
 
 ClassDefine<EntityClass> EntityClassBuilder =
-    defineClass<EntityClass>("LXL_Entity")
+    defineClass<EntityClass>("LLSE_Entity")
         .constructor(nullptr)
         .instanceFunction("getRawPtr", &EntityClass::getRawPtr)
 
@@ -473,7 +473,7 @@ Local<Value> EntityClass::hurt(const Arguments& args)
         if (!entity)
             return Local<Value>();
 
-        int damage = args[0].toInt();
+        float damage = args[0].asNumber().toFloat();
         return Boolean::newBoolean(entity->hurtEntity(damage));
     }
     CATCH("Fail in hurt!");
@@ -597,6 +597,78 @@ Local<Value> McClass::getAllEntities(const Arguments& args) {
         return arr;
     }
     CATCH("Fail in GetAllEntities");
+}
+
+Local<Value> McClass::cloneMob(const Arguments& args)
+{
+    CHECK_ARGS_COUNT(args, 2);
+
+    try
+    {
+        Actor* ac = EntityClass::extract(args[0]);
+        if (!ac)
+        {
+            logger.error("Wrong type of argument in CloneMob!");
+            return Local<Value>(); // Null
+        }
+		
+        FloatVec4 pos;
+
+        if (args.size() == 2)
+        {
+            if (IsInstanceOf<IntPos>(args[1]))
+            {
+                // IntPos
+                IntPos* posObj = IntPos::extractPos(args[1]);
+                if (posObj->dim < 0)
+                    return Boolean::newBoolean(false);
+                else
+                {
+                    pos.x = posObj->x;
+                    pos.y = posObj->y;
+                    pos.z = posObj->z;
+                    pos.dim = posObj->dim;
+                }
+            }
+            else if (IsInstanceOf<FloatPos>(args[1]))
+            {
+                // FloatPos
+                FloatPos* posObj = FloatPos::extractPos(args[1]);
+                if (posObj->dim < 0)
+                    return Boolean::newBoolean(false);
+                else
+                {
+                    pos = *posObj;
+                }
+            }
+            else
+            {
+                logger.error("Wrong type of argument in CloneMob!");
+                return Local<Value>();
+            }
+        }
+        else if (args.size() == 5)
+        {
+            // Number Pos
+            CHECK_ARG_TYPE(args[1], ValueKind::kNumber);
+            CHECK_ARG_TYPE(args[2], ValueKind::kNumber);
+            CHECK_ARG_TYPE(args[3], ValueKind::kNumber);
+            CHECK_ARG_TYPE(args[4], ValueKind::kNumber);
+            pos = {args[1].asNumber().toFloat(), args[2].asNumber().toFloat(), args[3].asNumber().toFloat(), args[4].toInt()};
+        }
+        else
+        {
+            logger.error("Wrong number of arguments in CloneMob!");
+            return Local<Value>();
+        }
+
+        auto entity = Level::cloneMob(pos.getVec3(), pos.dim,ac);
+        if (!entity)
+            return Local<Value>(); // Null
+        else
+            return EntityClass::newEntity(entity);
+    }
+    CATCH("Fail in CloneMob!");
 }
 
 Local<Value> McClass::spawnMob(const Arguments& args)

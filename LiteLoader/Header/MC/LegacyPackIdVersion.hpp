@@ -8,7 +8,7 @@
 
 #undef BEFORE_EXTRA
 
-class LegacyPackIdVersion {
+struct LegacyPackIdVersion {
 
 #define AFTER_EXTRA
 // Add Member There
@@ -17,13 +17,13 @@ class LegacyPackIdVersion {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_LEGACYPACKIDVERSION
 public:
-    class LegacyPackIdVersion& operator=(class LegacyPackIdVersion const&) = delete;
-    LegacyPackIdVersion(class LegacyPackIdVersion const&) = delete;
+    struct LegacyPackIdVersion& operator=(struct LegacyPackIdVersion const &) = delete;
+    LegacyPackIdVersion(struct LegacyPackIdVersion const &) = delete;
     LegacyPackIdVersion() = delete;
 #endif
 
 public:
-    MCAPI LegacyPackIdVersion(std::string const&, std::string const&);
+    MCAPI LegacyPackIdVersion(std::string const &, std::string const &);
     MCAPI struct PackIdVersion getUpgradedPackId() const;
     MCAPI ~LegacyPackIdVersion();
 

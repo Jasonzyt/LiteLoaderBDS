@@ -2,6 +2,7 @@
 #pragma once
 #define AUTO_GENERATED
 #include "../Global.h"
+#include "Core.hpp"
 
 #define BEFORE_EXTRA
 // Include Headers or Declare Types Here
@@ -17,8 +18,8 @@ class FlushableStorageAreaEnv {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_FLUSHABLESTORAGEAREAENV
 public:
-    class FlushableStorageAreaEnv& operator=(class FlushableStorageAreaEnv const&) = delete;
-    FlushableStorageAreaEnv(class FlushableStorageAreaEnv const&) = delete;
+    class FlushableStorageAreaEnv& operator=(class FlushableStorageAreaEnv const &) = delete;
+    FlushableStorageAreaEnv(class FlushableStorageAreaEnv const &) = delete;
     FlushableStorageAreaEnv() = delete;
 #endif
 
@@ -44,6 +45,7 @@ public:
     /*18*/ virtual void __unk_vfn_18();
     /*19*/ virtual void __unk_vfn_19();
     /*20*/ virtual void flushToPermanentStorage();
+    MCAPI FlushableStorageAreaEnv(class leveldb::Env *, class std::shared_ptr<class Core::FileStorageArea>);
 
 protected:
 

@@ -17,13 +17,20 @@ class IPackTelemetry {
 
 #ifndef DISABLE_CONSTRUCTOR_PREVENTION_IPACKTELEMETRY
 public:
-    class IPackTelemetry& operator=(class IPackTelemetry const&) = delete;
-    IPackTelemetry(class IPackTelemetry const&) = delete;
+    class IPackTelemetry& operator=(class IPackTelemetry const &) = delete;
+    IPackTelemetry(class IPackTelemetry const &) = delete;
     IPackTelemetry() = delete;
 #endif
 
 public:
     /*0*/ virtual ~IPackTelemetry();
+    /*
+    inline  ~IPackTelemetry(){
+         (IPackTelemetry::*rv)();
+        *((void**)&rv) = dlsym("??1IPackTelemetry@@UEAA@XZ");
+        return (this->*rv)();
+    }
+    */
 
 protected:
 

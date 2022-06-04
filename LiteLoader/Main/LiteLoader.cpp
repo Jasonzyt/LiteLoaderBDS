@@ -9,14 +9,14 @@
 #include <seh_exception/seh_exception.hpp>
 #include <ServerAPI.h>
 #include <HookAPI.h>
-#include <Main/Config.h>
-#include "Main/Loader.h"
-#include "Main/AutoUpgrade.h"
-#include "Main/CrashLogger.h"
-#include <TranslationAPI.h>
-#include "Main/AddonsHelper.h"
+#include "Config.h"
+#include "Loader.h"
+#include "AutoUpgrade.h"
+#include "CrashLogger.h"
+#include <I18nAPI.h>
+#include "AddonsHelper.h"
 #include <EventAPI.h>
-#include <LiteLoader/Main/Version.h>
+#include "Version.h"
 
 using namespace std;
 
@@ -66,22 +66,20 @@ void CheckRunningBDS()
     }
     CloseHandle(hProcessSnap);
     // Get current process path
-    auto buf = new WCHAR[8192];
-    auto sz = GetModuleFileName(NULL, buf, 8192);
+    WCHAR buf[8196] = {0};
+    auto sz = GetModuleFileName(NULL, buf, 8196);
     std::wstring current{buf, sz}; // Copy
-    delete[] buf;
-    buf = 0;
     // Check the BDS process paths
     for (auto& pid : pids) {
-        auto buf = new WCHAR[8196];
+        WCHAR buf[8196] = {0};
         // Open process handle
         auto handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_TERMINATE, false, pid);
         if (handle)
         {
-            DWORD sz = 0;
-            buf = new WCHAR[8192];
+            DWORD sz = NULL;
+            WCHAR buf[8196] = {0};
             // Get the full path of the process
-            if (sz = GetModuleFileNameEx(handle, NULL, buf, 8192))
+            if (sz = GetModuleFileNameEx(handle, NULL, buf, 8196))
             {
                 std::wstring path{buf, sz};
                 if (current == path)
@@ -100,7 +98,6 @@ void CheckRunningBDS()
                 }
             }
             CloseHandle(handle);
-            delete[] buf;
         }
     }
 }
@@ -149,7 +146,7 @@ void Welcome()
          << "\r" << R"(         | |___| | ||  __/ |__| (_) | (_| | (_| |  __/ |               )" << endl
          << "\r" << R"(         |_____|_|\__\___|_____\___/ \__,_|\__,_|\___|_|               )" << endl
          << "\r" << R"(                                                                       )" << endl
-         << "\r" << R"(       --------   Light-Weight BDS Plugin Loader   --------            )" << endl
+         << "\r" << R"(       --------   Light-Weight BDS Plugin Loader   ----------          )" << endl
          << "\r" << R"(                                                                       )" << endl;
 }
 
@@ -166,6 +163,19 @@ void CheckBetaVersion()
         logger.warn("PLEASE DO NOT USE IN PRODUCTION ENVIRONMENT!");
     }
 }
+
+void CheckProtocolVersion()
+{
+    auto currentProtocol = LL::getServerProtocolVersion();
+    if (TARGET_BDS_PROTOCOL_VERSION != currentProtocol)
+    {
+        logger.warn("Protocol version not match, target version: {}, current version: {}.",
+                    TARGET_BDS_PROTOCOL_VERSION, currentProtocol);
+        logger.warn("This will most likely crash the server, please use the LiteLoader that matches the BDS version!");
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 // extern
 extern void EndScheduleSystem();
 extern void FixBugEvent();
@@ -185,6 +195,9 @@ void LLMain()
     std::error_code ec;
     std::filesystem::create_directories("plugins", ec);
 
+    // Check Protocol Version
+    CheckProtocolVersion();
+
     // Fix problems
     FixUpCWD();
     FixPluginsLibDir();
@@ -201,11 +214,14 @@ void LLMain()
     // Check Running BDS(Requires Config)
     CheckRunningBDS();
 
-    // Initialize Player Database
-    InitPlayerDatabase();
-
     // I18n
     Translation::load("plugins/LiteLoader/LangPack/" + LL::globalConfig.language + ".json");
+
+    // Builtin CrashLogger
+    LL::InitCrashLogger(LL::globalConfig.enableCrashLogger);
+
+    // Initialize Player Database
+    InitPlayerDatabase();
 
     // Rename Window
     HWND hwnd = GetConsoleWindow();
@@ -217,15 +233,6 @@ void LLMain()
 
     // DebugMode
     CheckDevMode();
-
-    // Builtin CrashLogger
-    LL::InitCrashLogger(LL::globalConfig.enableCrashLogger);
-
-    // Register Myself
-    LL::registerPlugin("LiteLoaderBDS", "Strong plugin loader for Bedrock Dedicated Server", LL::getLoaderVersion(),
-    {
-        {"GitHub","github.com/LiteLDev/LiteLoaderBDS"} 
-    });
 
     // Addon Helper
     if (LL::globalConfig.enableAddonsHelper)
@@ -247,11 +254,10 @@ void LLMain()
 
     // Register Started
     Event::ServerStartedEvent::subscribe([](Event::ServerStartedEvent) {
-        logger.info("LiteLoader is distributed under the GPLv3 License");
+        logger.info("LiteLoader is distributed under the AGPLv3 License");
         logger.info("\u611f\u8c22\u65cb\u5f8b\u4e91 rhymc.com \u5bf9\u672c\u9879\u76ee\u7684\u652f\u6301");
         if (LL::globalConfig.enableAutoUpdate)
             LL::InitAutoUpdateCheck();
-        endTime = clock();
         return true;
     });
 

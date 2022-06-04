@@ -24,8 +24,8 @@ void inline StringTrim(string& str)
 
 void RemoteSyncCallRequest(ModuleMessage& msg)
 {
-    logger.debug("*** Remote call request received.");
-    logger.debug("*** Current Module:{}", LLSE_MODULE_TYPE);
+    //logger.debug("*** Remote call request received.");
+    //logger.debug("*** Current Module:{}", LLSE_MODULE_TYPE);
 
     istringstream sin(msg.getData());
 
@@ -49,17 +49,17 @@ void RemoteSyncCallRequest(ModuleMessage& msg)
             argsVector.push_back(JsonToValue(arg));
         }
 
-        logger.debug("*** Before remote call execute");
+        //logger.debug("*** Before remote call execute");
         Local<Value> result = funcData->func.get().call({}, argsVector);
-        logger.debug("*** After remote call execute");
+        //logger.debug("*** After remote call execute");
         
         //Feedback
-        logger.debug("*** Before remote call result return");
+        //logger.debug("*** Before remote call result return");
         if (!msg.sendResult(ModuleMessage::MessageType::RemoteSyncCallReturn, ValueToJson(result)))
         {
             logger.error("Fail to post remote call result return!");
         }
-        logger.debug("*** After remote call result return");
+        //logger.debug("*** After remote call result return");
     }
     catch (const Exception& e)
     {
@@ -77,6 +77,16 @@ void RemoteSyncCallRequest(ModuleMessage& msg)
             logger.error("Fail to post remote call result return!");
         }
     }
+    catch (const std::out_of_range& e)
+    {
+        logger.error(string("Fail to import! Function [") + funcName + "] has not been exported!");
+
+        //Feedback
+        if (!msg.sendResult(ModuleMessage::MessageType::RemoteSyncCallReturn, "[null]"))
+        {
+            logger.error("Fail to post remote call result return!");;
+        }
+    }
     catch (...)
     {
         logger.error("Error occurred in remote engine!");
@@ -91,74 +101,70 @@ void RemoteSyncCallRequest(ModuleMessage& msg)
 
 void RemoteSyncCallReturn(ModuleMessage& msg)
 {
-    logger.debug("*** Remote call result message received.");
-    logger.debug("*** Result: {}", msg.getData());
+    //logger.debug("*** Remote call result message received.");
+    //logger.debug("*** Result: {}", msg.getData());
     remoteResultMap[msg.getId()] = msg.getData();
     OperationCount(to_string(msg.getId())).done();
 }
 
 
 //////////////////// Remote Call ////////////////////
-
+#if false
 Local<Value> MakeRemoteCall(const string& funcName, const Arguments& args)
 {
-    //Remote Call
-    logger.debug("*** Remote Call begin");
-
-    ExportedFuncData* data;
-    try {
-        data = &(globalShareData->exportedFuncs).at(funcName);
-    }
-    catch (const std::out_of_range& e)
+    auto data = globalShareData->exportedFuncs.find(funcName);
+    if (data == globalShareData->exportedFuncs.end())
     {
-        logger.error(string("Fail to import! Function [") + funcName + "] has not been exported!");
+        logger.error("Fail to import! Function [{}] has not been exported!", funcName);
         return Local<Value>();
     }
 
-    ostringstream sout;
-    sout << funcName;
+    std::vector<std::string> params;
     for (int i = 0; i < args.size(); ++i)
-        sout << "\n" << ValueToJson(args[i]);
-
-    logger.debug("*** Before remote call request send");
-    auto sendResult = ModuleMessage::sendTo(data->engine, ModuleMessage::MessageType::RemoteSyncCallRequest, sout.str());
-    if (!sendResult)
     {
-        logger.error("Fail to send remote load request!");
-        return Local<Value>();
+        params.emplace_back(ValueToJson(args[i]));
     }
-    logger.debug("*** After remote call request send");
-
-    logger.debug("*** Before wait for remote call result");
-    auto returnResult = sendResult.waitForOneResult(LLSE_MAXWAIT_REMOTE_CALL);
-    if (!returnResult)
-    {
-        logger.error(tr("remoteCall.timeout.fail"));
-        return Local<Value>();
-    }
-    logger.debug("*** After wait for remote call result");
-
-    int msgId = sendResult.getMsgId();
-    Local<Value> res = JsonToValue(remoteResultMap[msgId]);
-    remoteResultMap.erase(msgId);
-    return res;
+    return JsonToValue(data->second.callback(std::move(params)));
 }
 
-bool LxlExportFunc(ScriptEngine *engine, const Local<Function> &func, const string &exportName)
+bool LLSEExportFunc(ScriptEngine *engine, const Local<Function> &func, const string &exportName)
 {
     ExportedFuncData* funcData = &(globalShareData->exportedFuncs)[exportName];
+    if (funcData->engine)
+        return false;
     funcData->engine = engine;
     funcData->func = script::Global<Function>(func);
     funcData->fromEngineType = LLSE_MODULE_TYPE;
+    funcData->callback = [exportName](std::vector<std::string> params) -> std::string {
+        auto data = globalShareData->exportedFuncs.find(exportName);
+        if (data == globalShareData->exportedFuncs.end())
+        {
+            logger.error("Exported function \"{}\" not found", exportName);
+            return "";
+        }
+        auto engine = data->second.engine;
+        if (LL::isServerStopping() || !EngineManager::isValid(engine) || engine->isDestroying())
+            return "";
+        EngineScope enter(data->second.engine);
+        std::vector<script::Local<Value>> scriptParams;
+        for (auto& param : params)
+        {
+            scriptParams.emplace_back(JsonToValue(param));
+        }
+        return ValueToJson(data->second.func.get().call({}, scriptParams));
+    };
     return true;
 }
-
-bool LxlRemoveAllExportedFuncs(ScriptEngine* engine)
+bool LLSERemoveAllExportedFuncs_Debug(ScriptEngine* engine);
+bool LLSERemoveAllExportedFuncs(ScriptEngine* engine)
 {
+    return LLSERemoveAllExportedFuncs_Debug(engine);
+#if 0
     erase_if(globalShareData->exportedFuncs, [&engine](auto& data) {
         return data.second.engine == engine;
     });
     return true;
+#endif
 }
 
 
@@ -166,18 +172,24 @@ bool LxlRemoveAllExportedFuncs(ScriptEngine* engine)
 
 Local<Value> LlClass::exportFunc(const Arguments& args)
 {
+    return exportFunc_Debug(args);
+#if 0
     CHECK_ARGS_COUNT(args, 2);
     CHECK_ARG_TYPE(args[0], ValueKind::kFunction);
     CHECK_ARG_TYPE(args[1], ValueKind::kString);
 
-    try {
-        return Boolean::newBoolean(LxlExportFunc(EngineScope::currentEngine(), args[0].asFunction(), args[1].toStr()));
+    try
+    {
+        return Boolean::newBoolean(LLSEExportFunc(EngineScope::currentEngine(), args[0].asFunction(), args[1].toStr()));
     }
-    CATCH("Fail in LxlExport!");
+    CATCH("Fail in LLSEExport!");
+#endif
 }
 
 Local<Value> LlClass::importFunc(const Arguments &args)
 {
+    return importFunc_Debug(args);
+#if 0
     CHECK_ARGS_COUNT(args, 1);
     CHECK_ARG_TYPE(args[0], ValueKind::kString);
 
@@ -187,10 +199,17 @@ Local<Value> LlClass::importFunc(const Arguments &args)
 
         //远程调用
         return Function::newFunction([funcName{ funcName }]
-        (const Arguments& args)->Local<Value>
-        {
+        (const Arguments& args)->Local<Value> {
+#ifdef DEBUG
+            auto startTime = clock();
+            auto res = MakeRemoteCall(funcName, args);
+            logger.info("MakeRemoteCall time: {}s", (clock() - startTime) / 1000.0);
+            return res;
+#endif // DEBUG
             return MakeRemoteCall(funcName, args);
         });
     }
-    CATCH("Fail in LxlImport!")
+    CATCH("Fail in LLSEImport!")
+#endif
 }
+#endif
